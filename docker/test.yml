@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: afl-db-test
+    environment:
+      - MYSQL_ROOT_PASSWORD=87654321
+      - MYSQL_DATABASE=afluenta_test
+      - MYSQL_USER=dev
+      - MYSQL_PASSWORD=12345678
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      interval: 5s
+      timeout: 20s
+      retries: 30
+      start_period: 60s
+  php:
+    image: php:latest
+    container_name: afl-php-test
+    platform: linux/amd64
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ../src:/afluenta-platform
+    env_file:
+      - ../env/.env-test  
