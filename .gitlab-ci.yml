@@ -1,15 +1,5 @@
-# CI MODEL: 
+# CI MODEL:
 # Laravel: test -> build -> push -> deploy
-
-.slack:
-  deploys:
-    - if [ "$text" != "" ]; then curl -X POST --data-urlencode "payload={\"channel\":\"#$SLACK_NOTIFICATIONS_CHANNEL\",\"username\":\"$CI_PROJECT_NAME\",\"text\":\"$text\",\"icon_url\":\"https://afluenta.com/favicon.png\"}" https://hooks.slack.com/services/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; fi
-
-.afluentasync:
-  withDelete:
-    - rsync --archive --compress --verbose --recursive --omit-dir-times --no-perms --no-owner --no-group --delete -e "ssh -p6922" --exclude='certs' --exclude='vendor' --exclude='/afluenta-platform/certs' --exclude='node_modules' --exclude='deploy.sh' --exclude="docker-compose/.dc" --exclude="docker-compose/.dc_test" --exclude='afluenta-crypto/public/tests/*' --exclude='scripts/checks/*' --exclude='scripts/versions/*' --exclude='.git' --exclude='.env' --exclude='.config' --exclude='README.md' --exclude='.cache' --exclude='.idea' --exclude='.aws_configured_*' --exclude='.dc*' --exclude='.DS_Store' --exclude='.gitignore' --exclude='README.md' --exclude='logs/*' --exclude="public/css/app.css" --exclude="public/css/app.js" --exclude="public/tests/*" --exclude='bootstrap/cache/*' --exclude='storage/app/public/*' --exclude='storage/framework/cache/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*' --exclude='storage/framework/testing/*' $local_path $instance_path 2> /dev/null
-  noDelete:
-    - rsync --archive --compress --verbose --recursive --omit-dir-times --no-perms --no-owner --no-group -e "ssh -p6922" --exclude='certs' --exclude='vendor' --exclude='/afluenta-platform/certs' --exclude='node_modules' --exclude='deploy.sh' --exclude="docker-compose/.dc" --exclude="docker-compose/.dc_test" --exclude='afluenta-crypto/public/tests/*' --exclude='scripts/checks/*' --exclude='scripts/versions/*' --exclude='.git' --exclude='.env' --exclude='.config' --exclude='README.md' --exclude='.cache' --exclude='.idea' --exclude='.aws_configured_*' --exclude='.dc*' --exclude='.DS_Store' --exclude='.gitignore' --exclude='README.md' --exclude='logs/*' --exclude="public/css/app.css" --exclude="public/css/app.js" --exclude="public/tests/*" --exclude='bootstrap/cache/*' --exclude='storage/app/public/*' --exclude='storage/framework/cache/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*' --exclude='storage/framework/testing/*' $local_path $instance_path 2> /dev/null
 
 default:
   image: docker:24.0.5
@@ -18,34 +8,74 @@ default:
   before_script:
     - docker info
 
+.slack:
+  deploys:
+    - if [ "$text" != "" ]; then curl -X POST --data-urlencode "payload={\"channel\":\"#$SLACK_NOTIFICATIONS_CHANNEL\",\"username\":\"$CI_PROJECT_NAME\",\"text\":\"$text\"}" https://hooks.slack.com/services/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; fi
+
+.sync:
+  withDelete:
+    - rsync --archive --compress --verbose --recursive --omit-dir-times --no-perms --no-owner --no-group --delete -e "ssh -p6922" --exclude='certs' --exclude='vendor'  --exclude='node_modules' --exclude='deploy.sh' --exclude="docker-compose/.dc" --exclude="docker-compose/.dc_test" --exclude='scripts/checks/*' --exclude='scripts/versions/*' --exclude='.git' --exclude='.env' --exclude='.config' --exclude='README.md' --exclude='.cache' --exclude='.idea' --exclude='.aws_configured_*' --exclude='.dc*' --exclude='.DS_Store' --exclude='.gitignore' --exclude='README.md' --exclude='logs/*' --exclude="public/css/app.css" --exclude="public/css/app.js" --exclude="public/tests/*" --exclude='bootstrap/cache/*' --exclude='storage/app/public/*' --exclude='storage/framework/cache/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*' --exclude='storage/framework/testing/*' $local_path $instance_path 2> /dev/null
+  noDelete:
+    - rsync --archive --compress --verbose --recursive --omit-dir-times --no-perms --no-owner --no-group -e "ssh -p6922" --exclude='certs' --exclude='vendor' --exclude='node_modules' --exclude='deploy.sh' --exclude="docker-compose/.dc" --exclude="docker-compose/.dc_test" --exclude='scripts/checks/*' --exclude='scripts/versions/*' --exclude='.git' --exclude='.env' --exclude='.config' --exclude='README.md' --exclude='.cache' --exclude='.idea' --exclude='.aws_configured_*' --exclude='.dc*' --exclude='.DS_Store' --exclude='.gitignore' --exclude='README.md' --exclude='logs/*' --exclude="public/css/app.css" --exclude="public/css/app.js" --exclude="public/tests/*" --exclude='bootstrap/cache/*' --exclude='storage/app/public/*' --exclude='storage/framework/cache/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*' --exclude='storage/framework/testing/*' $local_path $instance_path 2> /dev/null
+
+.deploy:
+  login:
+    - sudo aws ecr get-login-password --profile $PROFILE  --region $REGION | docker login --username AWS --password-stdin $REGISTRY
+  runner_permissions:
+    - sudo sh /infra/scripts/gitlab-runner_permisions.sh
+  push:
+    - docker push $REGISTRY/$IMAGE:latest
+  build:
+    - docker build -t $REGISTRY/$IMAGE:latest -f $DOCKERFILE .
+  test_php:
+    - !reference [.deploy, login]
+    - docker rm -f db-test php-test
+    - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST pull
+    - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST up -d --force-recreate --remove-orphans
+    - docker exec -t php-test composer install
+    - docker exec -t php-test php artisan migrate:fresh
+    - docker exec -t php-test ./vendor/bin/phpunit --testdox --do-not-cache-result --log-junit phpunit-report.xml --coverage-cobertura phpunit-coverage.xml --coverage-text --colors=never --coverage-html public/tests
+    - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST down
+    - coverage="$(python .gitlab/check_coverage.py --min_coverage=$MIN_COVERAGE --slack_username=$CI_PROJECT_NAME --branch=$CI_COMMIT_BRANCH --stage=$CI_JOB_STAGE --job=$CI_JOB_NAME --slack_channel=$SLACK_NOTIFICATIONS_CHANNEL)"
+    - text="$text | Coverage $coverage % (min $MIN_COVERAGE %)"
+  test_node:
+    - !reference [.deploy, login]
+    - docker rm -f -v $TEST_CONTAINER_NAME
+    - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST pull
+    - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST up -d --force-recreate --remove-orphans
+    - docker exec -t $TEST_CONTAINER_NAME npm install
+    - docker exec -t $TEST_CONTAINER_NAME npm run test-ci
+    - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST down
+    - coverage="$(python .gitlab/check_coverage-jest.py --slack_channel=$SLACK_NOTIFICATIONS_CHANNEL --min_coverage=$MIN_COVERAGE --slack_username=$CI_PROJECT_NAME --branch=$CI_COMMIT_BRANCH --stage=$CI_JOB_STAGE --job=$CI_JOB_NAME)"
+    - echo $coverage
+    - text="$text | Coverage $coverage % (min $MIN_COVERAGE %)" 
+  ecs:
+    - counter=1
+    - old_task=$(sudo aws ecs list-tasks --cluster $CLUSTER --profile $PROFILE --output=text | cut -d '/' -f 3)
+    - echo $old_task
+    - sudo aws ecs update-service --cluster $CLUSTER --profile $PROFILE  --service $SERVICE --force-new-deployment --region $REGION
+    - new_task=$(sudo aws ecs list-tasks --cluster $CLUSTER --profile $PROFILE  --output=text | cut -d '/' -f 3)
+    - if [ "$old_task" != "" ]; then while [ "$old_task" == "$new_task" ]; do sleep 10s; echo "new task equals to old task ($new_task==$old_task)"; new_task=$(sudo aws ecs list-tasks --cluster $CLUSTER --profile $PROFILE  --output=text | cut -d '/' -f 3); done; fi
+    - if [ "$old_task" != "" ]; then while [[ "$new_task" == *"$old_task"* ]]; do sleep 10s; echo "new task contains old task ($new_task has $old_task)"; new_task=$(sudo aws ecs list-tasks --cluster $CLUSTER --profile $PROFILE  --output=text | cut -d '/' -f 3); done; fi
+    - if [ "$old_task" != "" ]; then while [[ "$old_task" == *"$new_task"* ]]; do sleep 10s; echo "new task contains old task ($new_task has $old_task)"; new_task=$(sudo aws ecs list-tasks --cluster $CLUSTER --profile $PROFILE  --output=text | cut -d '/' -f 3); done; fi
+    - echo $new_task
+    - while [ $(sudo aws ecs describe-tasks --cluster $CLUSTER --profile $PROFILE  --tasks $new_task --output=text | grep CONTAINERS | grep HEALTHY | wc -l) == "0" ] && [ $counter -lt 30 ]; do echo "not yet, waiting $counter segs"; sleep $counter; let counter=$counter+1;  done
+    - if [ $counter -ge 30 ] ; then exit 1; fi
+
 variables:
   MIN_COVERAGE: 50
-  APP_NAME: afluenta-laravel_base
+  APP_NAME: challenge_2024_12_27
   SLACK_NOTIFICATIONS_CHANNEL: deploys-cicd
-  IMAGE_NAME_BETA: afluenta-beta-laravel_base
-  IMAGE_NAME_PROD: afluenta-prod-laravel_base
-  ECS_CLUSTER_BETA: cluster-beta-laravel_base
-  ECS_CLUSTER_PROD: cluster-prod-laravel_base
-  ECS_SERVICE_BETA_AR: service-beta-ar-laravel_base
-  ECS_SERVICE_BETA_MX: service-beta-mx-laravel_base
-  ECS_SERVICE_BETA_PE: service-beta-pe-laravel_base
-  ECS_SERVICE_PROD: service-prod-laravel_base
+  IMAGE: $APP_NAME
+  AWS_CLI_PROFILE: deploy
+  CLUSTER: cluster-$APP_NAME
   DOCKER_DRIVER: overlay2
-  AWS_ID_AR: 599517226567
-  AWS_ID_MX: 475707072356
-  AWS_ID_PE: 993395333047
-  AWS_ID_FINANCE: 116093716171
-  AWS_REGION_AR: us-east-1
-  AWS_REGION_MX: $AWS_REGION_AR
-  AWS_REGION_PE: $AWS_REGION_AR
-  AWS_REGION_FINANCE: $AWS_REGION_AR
-  AWS_REGISTRY_AR: $AWS_ID_AR.dkr.ecr.$AWS_REGION_AR.amazonaws.com
-  AWS_REGISTRY_MX: $AWS_ID_MX.dkr.ecr.$AWS_REGION_MX.amazonaws.com
-  AWS_REGISTRY_PE: $AWS_ID_PE.dkr.ecr.$AWS_REGION_PE.amazonaws.com
-  AWS_REGISTRY_FINANCE: $AWS_ID_FINANCE.dkr.ecr.$AWS_REGION_FINANCE.amazonaws.com
+  AWS_ID: 368539636127
+  AWS_REGION: us-east-2
+  REGISTRY: $AWS_ID.dkr.ecr.$AWS_REGION.amazonaws.com
   DOCKERFILE: Dockerfile
   DOCKER_COMPOSE_TEST: docker/test.yml
-  TEST_CONTAINER_NAME: afl-php-test
+  TEST_CONTAINER_NAME: php-test
   text: "#CIRUN Branch: $CI_COMMIT_BRANCH | Stage: $CI_JOB_STAGE | Job: $CI_JOB_NAME"
 
 stages:
@@ -56,40 +86,55 @@ stages:
   - deploy
   - done
 
-init:
+INIT:
   stage: init
-  tags:
-    - afluenta-runner
   variables:
     text: "#DEPLOY $CI_PROJECT_NAME,$CI_COMMIT_BRANCH $CI_JOB_NAME \ntriggered by: $GITLAB_USER_EMAIL | URL: $CI_PIPELINE_URL | commit message: \n$CI_COMMIT_MESSAGE"
   hooks:
     pre_get_sources_script:
-      - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
+      - !reference [.deploy, runner_permissions]
   script:
     - echo $text
     - !reference [.slack, deploys]
   rules:
-    - if: $CI_COMMIT_BRANCH =~ /^release_s[0-9]+$/
+    - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
     - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+test-dev:
+  stage: test
+  hooks:
+    pre_get_sources_script:
+      - !reference [.deploy, runner_permissions]
+  script:
+    - !reference [.deploy, test_php]
+    - echo $text
+  artifacts:
+    when: always
+    reports:
+      junit: src/phpunit-report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: src/phpunit-coverage.xml
+  coverage: '/^\s*Lines:\s*\d+.\d+\%/'
+  when: manual
+  rules:
+    - if: "$CI_COMMIT_BRANCH =~ /^feature/"
+    - if: "$CI_COMMIT_BRANCH =~ /^hotfix/"
+    - if: "$CI_COMMIT_BRANCH =~ /^update/"
+    - if: "$CI_COMMIT_BRANCH =~ /^task/"
+    - if: "$CI_COMMIT_BRANCH =~ /^test/"
+    - if: "$CI_COMMIT_BRANCH =~ /^bug/"
+    - if: "$CI_COMMIT_BRANCH =~ /^dev/"
 
 test:
   stage: test
   hooks:
     pre_get_sources_script:
-      - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-  tags:
-    - afluenta-runner
+      - !reference [.deploy, runner_permissions]
   script:
-    - aws ecr get-login-password --region $AWS_REGION_AR | docker login --username AWS --password-stdin $AWS_REGISTRY_AR
-    - docker rm -f afl-db-test afl-php-test
-    - rm -rf src/bootstrap/cache/*
-    - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST pull
-    - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST up -d --force-recreate --remove-orphans
-    - docker exec -t $TEST_CONTAINER_NAME composer install
-    - docker exec -t $TEST_CONTAINER_NAME bash -c "./vendor/bin/phpunit --testdox --do-not-cache-result --log-junit phpunit-report.xml --coverage-cobertura phpunit-coverage.xml --coverage-text --colors=never --coverage-html public/tests"
-    - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST down
-    - coverage="$(python .gitlab/check_coverage.py --min_coverage=$MIN_COVERAGE --slack_username=$CI_PROJECT_NAME --branch=$CI_COMMIT_BRANCH --stage=$CI_JOB_STAGE --job=$CI_JOB_NAME)"
-    - text="$text | Coverage $coverage % (min $MIN_COVERAGE %)" 
+    - !reference [.deploy, test_php]
+    - echo $text
     - !reference [.slack, deploys]
   artifacts:
     when: always
@@ -100,202 +145,94 @@ test:
         path: src/phpunit-coverage.xml
   coverage: '/^\s*Lines:\s*\d+.\d+\%/'
   rules:
-    - if: $CI_COMMIT_BRANCH =~ /^release_s[0-9]+$/
+    - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
     - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_COMMIT_BRANCH == "main"
 
 DONE:
   stage: done
-  tags:
-    - afluenta-runner
-  variables:
-    text: "#DEPLOY $CI_PROJECT_NAME | $CI_COMMIT_BRANCH | $CI_JOB_NAME DONE"
   hooks:
     pre_get_sources_script:
-      - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
+      - !reference [.deploy, runner_permissions]
+  variables:
+    text: "#DEPLOY $CI_PROJECT_NAME,$CI_COMMIT_BRANCH $CI_JOB_NAME"
   script:
-    - echo $text
     - !reference [.slack, deploys]
   rules:
-    - if: $CI_COMMIT_BRANCH =~ /^release_s[0-9]+$/
+    - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+beta-build:
+  stage: build
+  hooks:
+    pre_get_sources_script:
+      - !reference [.deploy, runner_permissions]
+  script:
+    - !reference [.deploy, build]
+    - !reference [.slack, deploys]
+  rules:
+    - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
+
+beta-push:
+  stage: push
+  hooks:
+    pre_get_sources_script:
+      - !reference [.deploy, runner_permissions]
+  script:
+    - !reference [.deploy, login]
+    - !reference [.deploy, push]
+    - !reference [.slack, deploys]
+  rules:
+    - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
+
+beta-deploy:
+  stage: deploy
+  hooks:
+    pre_get_sources_script:
+      - !reference [.deploy, runner_permissions]
+  script:
+    - !reference [.deploy, login]
+    - !reference [.deploy, ecs]
+    - !reference [.slack, deploys]
+  rules:
+    - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
+
+prod-build:
+  stage: build
+  hooks:
+    pre_get_sources_script:
+      - !reference [.deploy, runner_permissions]
+  script:
+    - !reference [.deploy, build]
+    - !reference [.slack, deploys]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_COMMIT_BRANCH == "master"
 
-# beta-build:
-#   stage: build
-#   hooks:
-#     pre_get_sources_script:
-#       - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-#   tags:
-#     - afluenta-runner
-#   script: 
-#     - aws ecr get-login-password --region $AWS_REGION_AR | docker login --username AWS --password-stdin $AWS_REGISTRY_AR
-#     - docker build -t $AWS_REGISTRY_AR/$IMAGE_NAME_BETA:latest -t $AWS_REGISTRY_MX/$IMAGE_NAME_BETA:latest -t $AWS_REGISTRY_PE/$IMAGE_NAME_BETA:latest -t $AWS_REGISTRY_FINANCE/$IMAGE_NAME_BETA:latest -f $DOCKERFILE .
-#     - !reference [.slack, deploys]
-#   rules:
-#     - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
+prod-push:
+  stage: push
+  hooks:
+    pre_get_sources_script:
+      - !reference [.deploy, runner_permissions]
+  script:
+    - !reference [.deploy, login]
+    - !reference [.deploy, push]
+    - !reference [.slack, deploys]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "master"
 
-# beta-push-ar:
-#   stage: push
-#   hooks:
-#     pre_get_sources_script:
-#       - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-#   tags:
-#     - afluenta-runner
-#   script: 
-#     - aws ecr get-login-password --region $AWS_REGION_AR | docker login --username AWS --password-stdin $AWS_REGISTRY_AR
-#     - docker push $AWS_REGISTRY_AR/$IMAGE_NAME_BETA:latest
-#     - !reference [.slack, deploys]
-#   rules:
-#     - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
+prod-deploy:
+  stage: deploy
+  hooks:
+    pre_get_sources_script:
+      - !reference [.deploy, runner_permissions]
+  script:
+    - !reference [.deploy, login]
+    - !reference [.deploy, ecs]
+    - !reference [.slack, deploys]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "master"
 
-# beta-deploy-ar:
-#   stage: deploy
-#   hooks:
-#     pre_get_sources_script:
-#       - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-#   tags:
-#     - afluenta-runner
-#   script: 
-#     - aws ecr get-login-password --region $AWS_REGION_AR | docker login --username AWS --password-stdin $AWS_REGISTRY_AR
-#     - counter=1
-#     - old_task=$(aws ecs list-tasks --cluster $ECS_CLUSTER_BETA --output=text | cut -d '/' -f 3)
-#     - echo $old_task
-#     - aws ecs update-service --cluster $ECS_CLUSTER_BETA --service $ECS_SERVICE_BETA_AR --force-new-deployment --region $AWS_REGION_AR
-#     - new_task=$(aws ecs list-tasks --cluster $ECS_CLUSTER_BETA --output=text | cut -d '/' -f 3)
-#     - if [ "$old_task" != "" ]; then while [ "$old_task" == "$new_task" ]; do sleep 10s; echo "new task equals to old task ($new_task==$old_task)"; new_task=$(aws ecs list-tasks --cluster $ECS_CLUSTER_BETA --output=text | cut -d '/' -f 3); done; fi
-#     - if [ "$old_task" != "" ]; then while [[ "$new_task" == *"$old_task"* ]]; do sleep 10s; echo "new task contains old task ($new_task has $old_task)"; new_task=$(aws ecs list-tasks --cluster $ECS_CLUSTER_BETA --output=text | cut -d '/' -f 3); done; fi
-#     - if [ "$old_task" != "" ]; then while [[ "$old_task" == *"$new_task"* ]]; do sleep 10s; echo "new task contains old task ($new_task has $old_task)"; new_task=$(aws ecs list-tasks --cluster $ECS_CLUSTER_BETA --output=text | cut -d '/' -f 3); done; fi
-#     - echo $new_task  
-#     - while [ $(aws ecs describe-tasks --cluster $ECS_CLUSTER_BETA --tasks $new_task --output=text | grep CONTAINERS | grep HEALTHY | wc -l) == "0" ] && [ $counter -lt 30 ]; do echo "not yet, waiting $counter segs"; sleep $counter; let counter=$counter+1;  done
-#     - if [ $counter -ge 30 ] ; then exit 1; fi 
-#     - !reference [.slack, deploys]
-#   rules:
-#     - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
-
-
-
-# master INIT:
-#   stage: init
-#   tags:
-#     - afluenta-runner
-#   variables:
-#     text: "<!channel> #DEPLOY $CI_PROJECT_NAME,$CI_COMMIT_BRANCH,$CI_JOB_NAME | triggered by: $GITLAB_USER_EMAIL | URL: $CI_PIPELINE_URL"
-#   hooks:
-#     pre_get_sources_script:
-#       - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-#   script:
-#     - echo $text
-#     - !reference [.slack, deploys]
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "master"
-
-# master-test:
-#   stage: test
-#   hooks:
-#     pre_get_sources_script:
-#       - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-#   tags:
-#     - afluenta-runner
-#   script:
-#     - aws ecr get-login-password --region $AWS_REGION_AR | docker login --username AWS --password-stdin $AWS_REGISTRY_AR
-#     - docker rm -f afl-db-test afl-php-test
-#     - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST pull
-#     - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST up -d --force-recreate --remove-orphans
-#     - docker exec $TEST_CONTAINER_NAME chmod -R 777 /afluenta-platform
-#     - docker exec -u gitlab-runner:gitlab-runner $TEST_CONTAINER_NAME composer install
-#     - echo "going to sleep to let the db start (30 segs)" && sleep 30
-#     - docker exec -u gitlab-runner:gitlab-runner $TEST_CONTAINER_NAME php artisan migrate
-#     - docker exec -u gitlab-runner:gitlab-runner $TEST_CONTAINER_NAME php artisan db:seed
-#     - docker exec -u gitlab-runner:gitlab-runner -t $TEST_CONTAINER_NAME vendor/bin/phpunit --do-not-cache-result --log-junit phpunit-report.xml --coverage-cobertura phpunit-coverage.xml --coverage-text --colors=never
-#     - docker-compose -p $APP_NAME -f $DOCKER_COMPOSE_TEST down
-#     - coverage="$(python .gitlab/check_coverage.py --min_coverage=$MIN_COVERAGE --slack_username=$CI_PROJECT_NAME --branch=$CI_COMMIT_BRANCH --stage=$CI_JOB_STAGE --job=$CI_JOB_NAME)"
-#     - text="$text | Coverage $coverage % (min $MIN_COVERAGE %)" 
-#     - !reference [.slack, deploys]
-#   artifacts:
-#     when: always
-#     reports:
-#       junit: src/phpunit-report.xml
-#       coverage_report:
-#         coverage_format: cobertura
-#         path: src/phpunit-coverage.xml
-#   coverage: '/^\s*Lines:\s*\d+.\d+\%/'
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "master"
-# master-build:
-#   stage: build
-#   hooks:
-#     pre_get_sources_script:
-#       - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-#   tags:
-#     - afluenta-runner
-#   script: 
-#     - aws ecr get-login-password --region $AWS_REGION_AR | docker login --username AWS --password-stdin $AWS_REGISTRY_AR
-#     - docker build -t $AWS_REGISTRY_AR/$IMAGE_NAME_PROD:latest -t $AWS_REGISTRY_MX/$IMAGE_NAME_PROD:latest -t $AWS_REGISTRY_PE/$IMAGE_NAME_PROD:latest -t $AWS_REGISTRY_FINANCE/$IMAGE_NAME_PROD:latest -f $DOCKERFILE .
-#     - !reference [.slack, deploys]
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "master"
-
-# master-push-ar:
-#   stage: push
-#   hooks:
-#     pre_get_sources_script:
-#       - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-#   tags:
-#     - afluenta-runner
-#   script: 
-#     - aws ecr get-login-password --region $AWS_REGION_AR | docker login --username AWS --password-stdin $AWS_REGISTRY_AR
-#     - docker push $AWS_REGISTRY_AR/$IMAGE_NAME_PROD:latest
-#     - !reference [.slack, deploys]
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "master"
-
-# master-push-mx:
-#   stage: push
-#   hooks:
-#     pre_get_sources_script:
-#       - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-#   tags:
-#     - afluenta-runner
-#   script: 
-#     - aws ecr get-login-password --region $AWS_REGION_MX | docker login --username AWS --password-stdin $AWS_REGISTRY_MX
-#     - docker push $AWS_REGISTRY_MX/$IMAGE_NAME_PROD:latest
-#     - !reference [.slack, deploys]
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "master"
-
-# master-push-pe:
-#   stage: push
-#   hooks:
-#     pre_get_sources_script:
-#       - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-#   tags:
-#     - afluenta-runner
-#   script: 
-#     - aws ecr get-login-password --region $AWS_REGION_PE | docker login --username AWS --password-stdin $AWS_REGISTRY_PE
-#     - docker push $AWS_REGISTRY_PE/$IMAGE_NAME_PROD:latest
-#     - !reference [.slack, deploys]
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "master"
-
-# master-deploy-ar:
-#   stage: deploy
-#   hooks:
-#     pre_get_sources_script:
-#       - sudo /afluenta/afluenta-infra/gitlab-runner_permisions.sh
-#   tags:
-#     - afluenta-runner
-#   script: 
-#     - aws ecr get-login-password --region $AWS_REGION_AR | docker login --username AWS --password-stdin $AWS_REGISTRY_AR
-#     - counter=1
-#     - old_task=$(aws ecs list-tasks --cluster $ECS_CLUSTER_PROD --output=text | cut -d '/' -f 3)
-#     - echo $old_task
-#     - aws ecs update-service --cluster $ECS_CLUSTER_PROD --service $ECS_SERVICE_PROD_AR --force-new-deployment --region $AWS_REGION_AR
-#     - new_task=$(aws ecs list-tasks --cluster $ECS_CLUSTER_BETA --output=text | cut -d '/' -f 3)
-#     - if [ "$old_task" != "" ]; then while [ "$old_task" == "$new_task" ]; do sleep 10s; echo "new task equals to old task ($new_task==$old_task)"; new_task=$(aws ecs list-tasks --cluster $ECS_CLUSTER_BETA --output=text | cut -d '/' -f 3); done; fi
-#     - if [ "$old_task" != "" ]; then while [[ "$new_task" == *"$old_task"* ]]; do sleep 10s; echo "new task contains old task ($new_task has $old_task)"; new_task=$(aws ecs list-tasks --cluster $ECS_CLUSTER_BETA --output=text | cut -d '/' -f 3); done; fi
-#     - if [ "$old_task" != "" ]; then while [[ "$old_task" == *"$new_task"* ]]; do sleep 10s; echo "new task contains old task ($new_task has $old_task)"; new_task=$(aws ecs list-tasks --cluster $ECS_CLUSTER_BETA --output=text | cut -d '/' -f 3); done; fi
-#     - echo $new_task  
-#     - while [ $(aws ecs describe-tasks --cluster $ECS_CLUSTER_BETA --tasks $new_task --output=text | grep CONTAINERS | grep HEALTHY | wc -l) == "0" ] && [ $counter -lt 30 ]; do echo "not yet, waiting $counter segs"; sleep $counter; let counter=$counter+1;  done
-#     - if [ $counter -ge 30 ] ; then exit 1; fi 
-#     - !reference [.slack, deploys]
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "master"

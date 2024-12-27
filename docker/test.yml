@@ -3,10 +3,10 @@ version: "3"
 services:
   mysql:
     image: mysql:8.0
-    container_name: afl-db-test
+    container_name: db-test
     environment:
       - MYSQL_ROOT_PASSWORD=87654321
-      - MYSQL_DATABASE=afluenta_test
+      - MYSQL_DATABASE=test
       - MYSQL_USER=dev
       - MYSQL_PASSWORD=12345678
     healthcheck:
@@ -16,13 +16,13 @@ services:
       retries: 30
       start_period: 60s
   php:
-    image: php:latest
-    container_name: afl-php-test
+    image: 368539636127.dkr.ecr.us-east-2.amazonaws.com/roquendo/php8-test:latest
+    container_name: php-test
     platform: linux/amd64
     depends_on:
       mysql:
         condition: service_healthy
     volumes:
-      - ../src:/afluenta-platform
+      - ../src:/platform
     env_file:
       - ../env/.env-test  

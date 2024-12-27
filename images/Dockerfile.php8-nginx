@@ -7,8 +7,8 @@ LABEL org.afluenta.php.cron="0"
 LABEL org.afluenta.php.xdebug="0"
 LABEL org.afluenta.php.last_updated_at="2023-11-08 10:00:00"
 RUN apk add nginx
-COPY images/configs/nginx-proxy/self-contained/laravel-fpm.conf /etc/nginx/http.d/default.conf
-COPY images/scripts/php-nginx.sh /scripts/php-nginx.sh
+COPY configs/nginx/laravel-fpm.conf /etc/nginx/http.d/default.conf
+COPY images/scripts/php-nginx.sh /scripts/entrypoint.sh
 EXPOSE 80 443
 RUN chmod 777 /scripts/php-nginx.sh
 RUN mkdir -p \

@@ -6,8 +6,8 @@ MIGRATE_NEEDED=$([ -f "/platform/vendor/autoload.php" ] && [ -f "/platform/compo
 
 php-fpm -D
 mkdir -p /var/log/nginx
-touch /var/log/nginx/access.log /var/log/nginx.error.log
-chmod 777 /var/log/nginx/access.log /var/log/nginx.error.log
+touch /var/log/nginx/access.log /var/log/nginx/error.log
+chmod 777 /var/log/nginx/access.log /var/log/nginx/error.log
 
 composer install
 
