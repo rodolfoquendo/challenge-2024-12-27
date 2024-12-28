@@ -16,10 +16,10 @@ trait Cached{
 
     public static function findCached($id): ?Model
     {
-        $key = get_called_class() . "-" . __FUNCTION__ . "-{$id}";
+        $class = \get_called_class();
+        $key =  "{$class}-" . __FUNCTION__ . "-{$id}";
         if(!Cache::has($key)){
-            $all = self::getCached();
-            Cache::forever($key,$all[$id]);
+            Cache::forever($key, $class::find($id));
         }
         return Cache::get($key);
     }
@@ -45,17 +45,19 @@ trait Cached{
             (!is_null($enabled_only) ? "-enabled" : '');
         if(!Cache::has($key)){
             $data = [];
-            $query = DB::table($table);
+            $query = $class::query();
             if($enabled_only){
                 $query->where('enabled',1);
             }
             if(!is_null($distinct)){
                 $query->groupBy($distinct);
             }
-            foreach($query->orderBy($order_by,$order_direction)->get() as $model){
+            $query = $query
+                ->orderBy($order_by,$order_direction)->get() ;
+            foreach($query as $model){
                 $data[ $model->id ] = $model;
             }
-            Cache::forever($key,$data);
+            Cache::forever($key, $data);
         }
         return Cache::get($key);
     }

@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
-use App\Services\DomainService;
-use App\Services\EmailService;
-use App\Traits\Blacklistable;
-use App\Traits\Verifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use \Illuminate\Database\Eloquent\Model;
 use \Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property int    $id
- * @property int    $gender_id
+ * @property int    $participant_id
+ * @property int    $skill_id
  * @property int    $level
  * @property string $name
  * @property string $created_at
@@ -22,12 +19,12 @@ use \Illuminate\Database\Eloquent\SoftDeletes;
  * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
  * @copyright 2024 Rodolfo Oquendo
  */
-class Participant extends Model
+class ParticipantSkill extends Model
 {
     use SoftDeletes,
         HasFactory;
 
-    protected $table = 'participants';
+    protected $table = 'participant_skills';
 
     /**
      * The model's default values for attributes.
@@ -37,13 +34,13 @@ class Participant extends Model
     protected $attributes = [
     ];
 
-    public function gender()
+    public function participant()
     {
-        return $this->belongsTo(Gender::class, 'gender_id');
+        return $this->belongsTo(Participant::class, 'participant_id');
     }
 
-    public function participantSkills()
+    public function skill()
     {
-        return $this->hasMany(ParticipantSkill::class, 'participant_id');
+        return $this->belongsTo(Skill::class, 'skill_id');
     }
 }

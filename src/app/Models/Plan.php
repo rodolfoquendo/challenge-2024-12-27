@@ -38,14 +38,8 @@ class Plan extends Model{
 
     protected $table = 'plans';
 
-    public static function cod($cod): ?Plan
-    {
-        $key = __METHOD__ . '_' . $cod;
-        if(!Cache::has($key)){
-            $data = self::where('cod', $cod)->first();
-            Cache::forever($key, $data);
-        }
-        return Cache::get($key);
+    public function users(){
+        return $this->hasMany(User::class, 'plan_id');
     }
 }
     

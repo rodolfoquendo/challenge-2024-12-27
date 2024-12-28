@@ -64,7 +64,7 @@ class StatisticsService extends ServiceBase
         $stat = $this->current();
         $plan = $this->plan();
         $this->checkPropertyExists($stat, $plan, $cod);
-        return $stat->$cod < $plan->$cod;
+        return is_null($plan->cod) || $stat->$cod < $plan->$cod;
     }
 
     /**
@@ -98,27 +98,6 @@ class StatisticsService extends ServiceBase
     public function remove(string $cod, int $amount = 1): bool
     {
         return $this->add($cod, $amount * -1);
-    }
-
-    /**
-     * Gets a stat value
-     *
-     * @param  string $cod the statistic we are looking for
-     *
-     * @return object      An object with stat and plan
-     *
-     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
-     * @copyright 2024 Rodolfo Oquendo
-     */
-    public function stat(string $cod): object
-    {
-        $stat = $this->current();
-        $plan = $this->plan();
-        $this->checkPropertyExists($stat, $plan, $cod);
-        return (object)[
-            'stat' => $stat->$cod,
-            'plan' => $plan->$cod,
-        ];
     }
 
     /**

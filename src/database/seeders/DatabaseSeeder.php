@@ -4,7 +4,11 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
+use App\Models\Gender;
 use App\Models\Participant;
+use App\Models\ParticipantSkill;
+use App\Models\Skill;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -17,12 +21,10 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         Participant::factory()
-            ->count(8)
-            ->female()
-            ->create();
-        Participant::factory()
-            ->count(8)
-            ->male()
+            ->count(pow(2,3))
+            ->state(new Sequence(
+                ['gender_id' => fn($x) => [Gender::F, Gender::M][rand(0,1)]]
+            ))
             ->create();
     }
 }

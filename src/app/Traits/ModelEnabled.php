@@ -17,6 +17,19 @@ trait ModelEnabled{
     }
 
     /**
+     * Checks if the model is enabled
+     *
+     * @return bool
+     *
+     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
+     * @copyright 2024 Rodolfo Oquendo
+     */
+    public function isDisabled(): bool
+    {
+        return !$this->isEnabled();
+    }
+
+    /**
      * Enables the model
      *
      * @return bool If enabled

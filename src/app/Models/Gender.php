@@ -27,7 +27,7 @@ class Gender extends Model
     const F = 1;
     const M = 2;
 
-    protected $table = 'gender';
+    protected $table = 'genders';
 
     public function participants()
     {
