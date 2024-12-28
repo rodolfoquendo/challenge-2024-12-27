@@ -46,7 +46,7 @@ trait Http
      */
     public function response($payload, int $httpCode = Response::HTTP_OK): string
     {
-        return response()->afluenta($payload, $httpCode);
+        return response()->api($payload, $httpCode);
 
 
     }

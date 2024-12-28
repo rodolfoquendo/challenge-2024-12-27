@@ -1,24 +1,17 @@
 FROM php:8.2-fpm-alpine
-LABEL org.afluenta.php.authors="roquendo@afluenta.com"
-LABEL org.afluenta.php.version="8.2"
-LABEL org.afluenta.php.os="alpine"
-LABEL org.afluenta.php.nginx="0"
-LABEL org.afluenta.php.cron="0"
-LABEL org.afluenta.php.xdebug="0"
-LABEL org.afluenta.php.last_updated_at="2023-11-08 13:00:00"
+
 EXPOSE 9000
-WORKDIR /afluenta-platform
+WORKDIR /platform
 
 RUN ln -snf /usr/share/zoneinfo/America/Argentina/Buenos_Aires /etc/localtime > /etc/timezone
+COPY images/scripts/php.sh /scripts/entrypoint.sh
 COPY images/configs/php/php.ini /usr/local/etc/php/php.ini
 COPY images/configs/php/browscap.ini /etc/defaults/php/browscap.ini
 COPY images/configs/php/php-fpm.conf /etc/defaults/php/fpm.conf
 COPY images/configs/php/php-fpm.conf /usr/local/etc/php-fpm.d/zz-fpm.conf
 COPY images/configs/php/greet /etc/greet
+
 RUN echo "sh /etc/greet" >> /root/.bashrc
-
-
-
 
 RUN php -r "readfile('https://getcomposer.org/installer');" | php -- --filename=composer --install-dir=/usr/local/bin 
 RUN pecl channel-update pecl.php.net
@@ -51,7 +44,7 @@ RUN apk add gnutls-dev
 # apk add icu-dev
 RUN apk add icu-dev
 # apk add imagemagick-dev
-RUN apk add imagemagick-dev
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS imagemagick-dev
 # apk add jpeg-dev
 RUN apk add jpeg-dev
 # apk add libcurl
@@ -88,8 +81,6 @@ RUN apk add nodejs
 RUN apk add npm
 # apk add openssl 1.5s
 RUN apk add openssl
-# apk add php8-pecl-imagick 1.9s
-RUN apk add php8-pecl-imagick
 # apk add procps 2.0s
 RUN apk add procps
 # apk add re2c 2.0s
@@ -163,4 +154,4 @@ RUN docker-php-ext-enable imagick
 
 
 
-ENTRYPOINT php-fpm
+ENTRYPOINT [ "/scripts/entrypoint.sh" ]

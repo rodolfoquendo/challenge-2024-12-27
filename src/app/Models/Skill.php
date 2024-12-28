@@ -24,7 +24,7 @@ class Skill extends Model
 {
     use Cached;
 
-    protected $table = 'gender';
+    protected $table = 'skills';
 
     public function participants()
     {

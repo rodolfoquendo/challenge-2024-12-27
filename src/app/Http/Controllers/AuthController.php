@@ -23,7 +23,7 @@ class AuthController extends Controller
         try {
             return $this->success([
                 'access_token' => auth('api')->attempt([
-                    "username" => $request->username,
+                    "email" => $request->email,
                     "password" => $request->password,
                 ]),
                 'token_type' => 'bearer',

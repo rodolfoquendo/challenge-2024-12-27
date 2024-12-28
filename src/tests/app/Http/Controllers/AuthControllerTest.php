@@ -25,7 +25,7 @@ class AuthControllerTest extends \Tests\TestCase
     {
         $this->createApplication();
         $response = $this->postJson($this->APIRoute_v1('auth/login'),[
-            'username' => 'asd',
+            'email' => 'asd',
             'password' => 'asd',
         ]);
         $response->assertUnprocessable();
@@ -39,17 +39,12 @@ class AuthControllerTest extends \Tests\TestCase
     {
         $this->createApplication();
         $response = $this->postJson($this->APIRoute_v1('auth/login'),[
-            'username' => 'asdd',
+            'email' => 'asdd@asd.asd',
             'password' => 'asdd',
         ],[
             'Content-Type' => 'application/json',
         ]);
-        $response = $response->json();
-        $this->assertTrue(isset($response['payload']));
-        $this->assertTrue(isset($response['payload']));
-        $this->assertTrue(isset($response['status']));
-        $this->assertFalse($response['success']);
-        $this->assertTrue($response['status'] == Response::HTTP_I_AM_A_TEAPOT);
+        $response->assertUnprocessable();
 
     }
 
@@ -60,8 +55,8 @@ class AuthControllerTest extends \Tests\TestCase
     {
         $this->createApplication();
         $response = $this->postJson($this->APIRoute_v1('auth/login'),[
-            'username' => env('JWT_USERNAME'),
-            'password' => env('JWT_PASSWORD'),
+            'email' => env('MASTER_USER_EMAIL','rodolfoquendo@gmail.com'),
+            'password' => env('MASTER_USER_PASSWORD','12345678'),
         ]);
         $response = $response->json();
         $this->assertTrue(isset($response['success']));

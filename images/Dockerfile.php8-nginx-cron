@@ -1,0 +1,16 @@
+FROM 599517226567.dkr.ecr.us-east-1.amazonaws.com/php8-nginx:latest
+
+COPY images/configs/cron/laravel /var/spool/cron/crontabs/root 
+COPY images/configs/cron/laravel /etc/crontab
+COPY images/scripts/php-nginx-cron.sh /scripts/entrypoint.sh
+COPY images/scripts/cron.sh /scripts/cron.sh
+
+RUN touch \
+    /var/log/cron.log
+RUN chmod 777 /scripts/entrypoint.sh \
+    /scripts/cron.sh \
+    /var/log/cron.log 
+RUN chmod 0644 /etc/crontab /var/spool/cron/crontabs/root 
+RUN crontab /var/spool/cron/crontabs/root 
+RUN crontab -u root /var/spool/cron/crontabs/root 
+RUN crontab  /var/spool/cron/crontabs/root 

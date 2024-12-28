@@ -1,0 +1,9 @@
+
+SHELL=/bin/bash
+MAIL_TO=rodolfoquendo@gmail.com
+
+* * * * * /scripts/cron.sh >> /var/log/cron.log
+
+#LEAVE A MOTHERFUCKER LINE EMPTY AT THE END IT WONT WORK IF YOU DONT MOTHERFUCKER
+
+

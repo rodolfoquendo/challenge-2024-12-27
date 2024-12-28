@@ -10,7 +10,7 @@ default:
 
 .slack:
   deploys:
-    - if [ "$text" != "" ]; then curl -X POST --data-urlencode "payload={\"channel\":\"#$SLACK_NOTIFICATIONS_CHANNEL\",\"username\":\"$CI_PROJECT_NAME\",\"text\":\"$text\"}" https://hooks.slack.com/services/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; fi
+    - if [ "$text" != "" ]; then curl -X POST --data-urlencode "payload={\"channel\":\"#$SLACK_NOTIFICATIONS_CHANNEL\",\"username\":\"$CI_PROJECT_NAME\",\"text\":\"$text\"}" $SLACK_URL; fi
 
 .sync:
   withDelete:
@@ -67,7 +67,6 @@ variables:
   APP_NAME: challenge_2024_12_27
   SLACK_NOTIFICATIONS_CHANNEL: deploys-cicd
   IMAGE: $APP_NAME
-  AWS_CLI_PROFILE: deploy
   CLUSTER: cluster-$APP_NAME
   DOCKER_DRIVER: overlay2
   AWS_ID: 368539636127
