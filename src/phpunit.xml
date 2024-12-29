@@ -3,7 +3,7 @@
   <coverage/>
   <testsuites>
     <testsuite name="App">
-      <directory suffix="Test.php">./tests/App</directory>
+      <directory suffix="Test.php">./Tests/App</directory>
     </testsuite>
   </testsuites>
   <php>
