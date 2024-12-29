@@ -15,19 +15,14 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('tournaments', function (Blueprint $table) {
+        Schema::create('tournament_steps', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->string('cod');
-            $table->string('title');
-            $table->timestamp('starts_at');
-            $table->timestamp('ends_at');
-            $table->decimal('entry_fee', total: 20, places: 2)->nullable();
-            $table->unsignedBigInteger('max_winners')->default(1);
-            $table->unsignedBigInteger('max_participants')->nullable();
+            $table->unsignedBigInteger('tournament_id');
+            $table->longText('data');
+            $table->longText('result');
             $table->timestamps();
             $table->softDeletes();
-            $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('tournament_id')->references('id')->on('tournaments');
         });
     }
 

@@ -32,7 +32,6 @@ trait Cached{
     public static function getCached(
         $order_by = 'id', 
         $order_direction = 'asc', 
-        $distinct = null, 
         $enabled_only = false
     ): array
     {
@@ -41,16 +40,12 @@ trait Cached{
         $key   = "{$table}-" . 
             __FUNCTION__ . 
             "-{$order_by}-{$order_direction}" . 
-            (!is_null($distinct) ? "-{$distinct}" : '') . 
             (!is_null($enabled_only) ? "-enabled" : '');
         if(!Cache::has($key)){
             $data = [];
             $query = $class::query();
             if($enabled_only){
                 $query->where('enabled',1);
-            }
-            if(!is_null($distinct)){
-                $query->groupBy($distinct);
             }
             $query = $query
                 ->orderBy($order_by,$order_direction)->get() ;

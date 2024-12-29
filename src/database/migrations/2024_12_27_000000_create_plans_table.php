@@ -63,7 +63,7 @@ return new class extends Migration
                 'price_monthly'       => 99,  
                 'price_yearly'        => 990,  
                 'description'         => null, 
-                'enabled'             => 1, 
+                'enabled'             => 0, 
                 'tournaments'  => 100, 
                 'participants' => 100 * 10000, 
                 'created_at'          => $date, 

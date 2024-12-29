@@ -26,8 +26,8 @@ class TournamentFeatureService extends ServiceBase
         return $this->tournamentStepsService()->add($tournament, $participants);
     }
 
-    private function participantAmountCheck(int $participantAmount)
+    public function participantAmountCheck(int $participantAmount)
     {
-        return $participantAmount >=2 && ($participantAmount & ($participantAmount - 1)) == 0;
+        return $participantAmount >= 2 && ($participantAmount & ($participantAmount - 1)) == 0;
     }
 }

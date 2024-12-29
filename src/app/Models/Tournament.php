@@ -7,6 +7,7 @@ use App\Services\EmailService;
 use App\Traits\Blacklistable;
 use App\Traits\Cached;
 use App\Traits\Verifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use \Illuminate\Database\Eloquent\Model;
 use \Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -18,11 +19,10 @@ use \Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $cod
  * @property string $title
  * @property string $starts_at
- * @property string $ends_at
+ * @property string $xends_at
  * @property float  $entry_fee
  * @property int    $max_winners
  * @property int    $max_participants
- * @property int    $participants
  * @property string $created_at
  * @property string $updated_at
  * @property string $deleted_at
@@ -32,6 +32,7 @@ use \Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Tournament extends Model
 {
+    use HasFactory;
 
     protected $table = 'tournaments';
     
@@ -41,7 +42,6 @@ class Tournament extends Model
      * @var array
      */
     protected $attributes = [
-        'participants' => 0,
         'max_winners' => 1,
     ];
 
@@ -49,5 +49,10 @@ class Tournament extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function tournamentParticipants()
+    {
+        return $this->hasMany(TournamentParticipant::class, 'tournament_id');
     }
 }

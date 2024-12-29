@@ -2,10 +2,12 @@
 
 namespace Tests;
 
+use App\Traits\Services;
 
 abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
 {
-    use CreatesApplication;
+    use CreatesApplication,
+        Services;
     protected $token = null;
 
     protected function getToken(){

@@ -30,6 +30,16 @@ class TournamentParticipant extends Model
 
     protected $table = 'tournament_participants';
 
+    /**
+     * The model's default values for attributes.
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'entry_fee_paid' => 0,
+        'winner' => 0,
+    ];
+
     public function tournament()
     {
         return $this->belongsTo(Tournament::class, 'tournament_id');

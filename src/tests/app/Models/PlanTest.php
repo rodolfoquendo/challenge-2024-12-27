@@ -50,4 +50,11 @@ class PlanTest extends \Tests\TestCase
         $this->assertTrue(count($model->users) == 0);
     }
 
+    public function test__GetCached__options(){
+        $this->createApplication();
+        $plans = Plan::getCached(enabled_only: true);
+        $this->assertTrue(count($plans) == 3);
+
+    }
+
 }

@@ -17,7 +17,6 @@ use \Illuminate\Database\Eloquent\SoftDeletes;
  * @property int    $tournament_id
  * @property string $data
  * @property string $result
- * @property int    $has_winners
  * @property string $created_at
  * @property string $updated_at
  * @property string $deleted_at
@@ -29,16 +28,6 @@ class TournamentStep extends Model
 {
 
     protected $table = 'tournament_steps';
-    
-    /**
-     * The model's default values for attributes.
-     *
-     * @var array
-     */
-    protected $attributes = [
-        'has_winners' => 0,
-    ];
-
 
     public function tournament()
     {

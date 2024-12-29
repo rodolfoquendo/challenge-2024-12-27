@@ -13,13 +13,15 @@ class TournamentStepsService extends ServiceBase
             ->last();
     }
 
-    public function add(Tournament $tournament, array $participants = []){
+    public function add(Tournament $tournament, array $participants = []): true
+    {
         $luckPercentage = config('roquendo.luck');
         $levelPercentage = 1 - $luckPercentage;
         $step = new TournamentStep();
-        $step->data = \json_encode($participants);
+        $step->tournament_id = $tournament->id;
         shuffle($participants);
         $result = [];
+        $oldParticipants = [];
         $newParticipants = [];
         for($z = 0; $z < count($participants); $z++){
             /**
@@ -30,8 +32,6 @@ class TournamentStepsService extends ServiceBase
              * @var Participant
              */
             $part2 = $participants[$z + 1];
-            $level1 = $part1->level * $levelPercentage;
-            $level2 = $part2->level * $levelPercentage;
             $luck1 = rand(0,100) * $luckPercentage;
             $luck2 = rand(0,100) * $luckPercentage;
             $part1Total = ($part1->level * $levelPercentage) + ($luck1); 
@@ -54,14 +54,18 @@ class TournamentStepsService extends ServiceBase
                     "total" => $part2Total,
                 ],
             ];
+            $oldParticipants[] = $part1->id;
+            $oldParticipants[] = $part2->id;
             $newParticipants[] = $part1Total > $part2Total ? $part1 : $part2;
             $z++;
         }
+        $step->data = \json_encode($oldParticipants);
         $step->result = \json_encode($result);
         $step->save();
         if(count($newParticipants) > $tournament->max_winners){
             return $this->add($tournament, $newParticipants);
         }
+        return true;
     }
 
 }

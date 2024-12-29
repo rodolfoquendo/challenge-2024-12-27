@@ -5,6 +5,7 @@ namespace Tests\App\Models;
 use App\Models\Gender;
 use App\Models\Participant;
 use App\Models\ParticipantSkill;
+use App\Models\Skill;
 
 class ParticipantTest extends \Tests\TestCase
 {

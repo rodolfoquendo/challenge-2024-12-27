@@ -170,7 +170,7 @@ trait Services
      *
      * @param  \App\Models\User|null                  $user The user that will use the service
      *
-     * @return \App\Services\Models\TournamentFeatureService The service instance with the user set (if given)
+     * @return \App\Services\Features\TournamentFeatureService The service instance with the user set (if given)
      *
      * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
      * @copyright 2024 

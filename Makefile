@@ -64,6 +64,8 @@ build-prod:
 push-prod:
 	@docker push $(AWS_REGISTRY)/$(IMAGE_NAME_PROD):latest 
 
+coverage:
+	@open src/public/__TEST__/index.html
 test:	
 	# @make build-base
 	@docker rm -f -v db-test php-test
@@ -72,7 +74,7 @@ test:
 	@docker exec -t $(TEST_CONTAINER_NAME) composer install
 	@docker exec -t $(TEST_CONTAINER_NAME) php artisan migrate --seed
 	@docker exec -t $(TEST_CONTAINER_NAME) bash -c "./vendor/bin/phpunit --testdox --do-not-cache-result --configuration phpunit.xml --coverage-html '/platform/public/__TEST__'" 
-	@open src/public/__TEST__/index.html
+	@make coverage
 
 install:
 	@echo Installing git hooks...

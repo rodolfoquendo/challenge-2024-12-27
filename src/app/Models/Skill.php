@@ -35,7 +35,7 @@ class Skill extends Model
         return $this->belongsTo(Gender::class, 'gender_id');
     }
 
-    public function participants()
+    public function participantSkills()
     {
         return $this->hasMany(ParticipantSkill::class, 'skill_id');
     }

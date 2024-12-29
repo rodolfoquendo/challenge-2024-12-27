@@ -59,6 +59,6 @@ class User extends Model implements JWTSubject, Authenticatable
 
     public function plan()
     {
-        return $this->belongsTo(User::class, 'plan_id');
+        return $this->belongsTo(Plan::class, 'plan_id');
     }
 }
