@@ -10,7 +10,7 @@ trait CreatesApplication
     protected ?Application $test_app = null;
     /**
      * Creates the application.]
-     * @return Application 
+     * @return Application
      */
     public function createApplication(): Application
     {
