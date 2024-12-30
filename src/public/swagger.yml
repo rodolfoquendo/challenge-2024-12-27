@@ -1,0 +1,450 @@
+openapi: 3.0.0
+servers:
+  - description: Dev
+    url: http://localhost
+  - description: Beta
+    url: https://not-setup-if-not-needed.beta.rodolfoquendo.com
+  - description: Production
+    url: https://not-setup-if-not-needed.prod.rodolfoquendo.com
+    
+info:
+  version: "1.0.0"
+  title: Challenge API Reference
+  description: This is the description of the api endpoints for this challenge
+  contact:
+    name: Rodolfo Oquendo
+    email: roquendo@afluenta.com
+    url: https://rodolfoquendo.com
+security:
+  - BearerAuth: []
+paths:
+  /status/nginx:
+    get:
+      tags:
+        - status
+      responses:
+        200:
+          description: nginx status, this generally means the api is up and running
+          content:
+            application/json:
+              schema:
+                description: The status of the service
+                type: object
+                properties:
+                  status:
+                    type: string
+                    default: "online"
+
+  /api/v1/auth/login:
+    post:
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth-login-request'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/auth-login-request'
+      responses:
+        200:
+          description: the authentication token to use as header
+          $ref: '#/components/schemas/auth-token'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/auth-login-request'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/auth-login-request'
+      responses:
+        200:
+          description: the authentication token to use as header
+          $ref: '#/components/schemas/auth-token'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/v1/enums/languages:
+    get:
+      tags:
+        - enums
+      security: 
+        - BearerAuth: []
+      responses:
+        200:
+          description: The service enabled languages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+                items:
+                  $ref: '#/components/schemas/Language'
+
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/v1/enums/stages:
+    get:
+      tags:
+        - enums
+      security: 
+        - BearerAuth: []
+      responses:
+        200:
+          description: The service enabled stages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/enum-stages'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/v1/enums/plans:
+    get:
+      tags:
+        - enums
+      security: 
+        - BearerAuth: []
+      responses:
+        200:
+          description: The service enabled plans
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/enum-plans'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+  
+  /api/v1/user-language/get:
+    get:
+      tags:
+        - user-language
+      security: 
+        - BearerAuth: []
+      responses:
+        200:
+          description: The user language
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+                items:
+                  $ref: '#/components/schemas/UserLanguage'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+components:
+  schemas:
+    Collection: 
+      description: An array of items
+      type: array
+    UserLanguage:
+      description: A language for the user account
+      type: object
+      properties:
+        language:
+          type: string
+          example: 'en_US'
+        enabled:
+          type: boolean
+      required:
+        - id
+        - name
+    Language:
+      description: The service language
+      type: object
+      properties:
+        cod:
+          type: string
+          example: 'fr_FR'
+        title_en:
+          type: string
+          example: 'French (France)'
+        title_native:
+          type: string
+          example: 'Français (France)'
+      required:
+        - id
+        - name
+    base-response:
+      type: object
+      required:
+        - app_name
+        - app_url
+        - app_env
+        - success
+        - payload
+        - date
+        - time
+        - httpStatus
+      properties:
+        app_name:
+          type: string
+          format: string
+          example: "Afluenta-languages"
+          description: This app name
+        app_url:
+          type: string
+          format: string
+          example: "https://ms-internal-beta.afluenta.com/languages"
+          description: This app base url
+        app_env:
+          type: string
+          format: string
+          example: "dev"
+          description: This app base url
+        success:
+          type: boolean
+          format: boolean
+          description: This app base url
+        payload:
+          oneOf:
+          - type: string
+          - type: integer
+          - type: array
+          - type: object
+          - type: boolean
+          - type: number
+          description: The payload response
+        date:
+          type: string
+          format: string
+          example: "Y-m-d H:i:s"
+          description: The server date
+        time:
+          type: integer
+          format: int64
+          example: 1715279865
+          description: The server time
+        httpStatus:
+          type: integer
+          format: int64
+          example: 200
+          description: The http response code
+                      
+    auth-login-request:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: string
+          description: The email
+        password:
+          type: string
+          format: string
+          description: The password
+    auth-login-success:
+      allOf: 
+        - $ref: '#/components/schemas/base-response'
+        - type: object
+          properties:
+            payload:
+              type: object
+              required:
+                - access_token
+              properties:
+                access_token:
+                  type: string
+                  format: string
+                  description: The token to be used
+                expires_in:
+                  type: integer
+                  format: int64
+                  example: 3600
+                  description: The expiration seconds
+                token_type:
+                  type: string
+                  format: string
+                  example: Bearer
+                  description: The token type
+
+    auth-login-failure:
+      allOf:     # Combines the BasicErrorModel and the inline model
+        - $ref: '#/components/schemas/base-response'
+        - type: object
+          properties:
+            httpStatus:
+              example: 401
+            success:
+              example: false
+            payload:
+              type: object
+              required:
+                - access_token
+              properties:
+                errors:
+                  type: object
+                  properties:
+                    login:
+                      type: string
+                      default: "Invalid credentials"
+
+             
+    enum-languages:
+      allOf:
+        - $ref: '#/components/schemas/base-response'
+        - type: object
+          properties:
+            payload:
+              $ref: '#/components/schemas/Collection'
+              items:
+                type: object
+                properties: 
+                  cod:
+                    type: string
+                    format: string
+                    example: "en_US"
+                    description: the language code
+                  title_en:
+                    type: string
+                    format: string
+                    example: "English (US)"
+                    description: The language title in english
+                  title_native:
+                    type: string
+                    format: string
+                    example: "English (US)"
+                    description: The language name in native language
+
+    enum-stages:
+      allOf:
+        - $ref: '#/components/schemas/base-response'
+        - type: object
+          properties:
+            payload:
+              type: array
+              items:
+                type: object
+                properties: 
+                  cod:
+                    type: string
+                    format: string
+                    example: "dev"
+                    description: the stage code
+                  title:
+                    type: string
+                    format: string
+                    example: "Development"
+                    description: The stage title
+    auth-token:
+      allOf: 
+        - $ref: '#/components/schemas/base-response'
+        - type: object
+          properties:
+            payload:
+              type: object
+              required:
+                - access_token
+              properties:
+                access_token:
+                  type: string
+                  format: string
+                  description: The token to be used
+                expires_in:
+                  type: integer
+                  format: int64
+                  example: 3600
+                  description: The expiration seconds
+                token_type:
+                  type: string
+                  format: string
+                  example: Bearer
+                  description: The token type
+    auth-me:
+      allOf: 
+        - $ref: '#/components/schemas/base-response'
+        - type: object
+          properties:
+            payload:
+              type: object
+              required:
+                - access_token
+              properties:
+                access_token:
+                  type: string
+                  format: string
+                  description: The token to be used
+                expires_in:
+                  type: integer
+                  format: int64
+                  example: 3600
+                  description: The expiration seconds
+                token_type:
+                  type: string
+                  format: string
+                  example: Bearer
+                  description: The token type
+
+    enum-plans:
+      allOf:
+        - $ref: '#/components/schemas/base-response'
+        - type: object
+          properties:
+            payload:
+              type: array
+              items:
+                type: object
+                properties: 
+                  cod:
+                    type: string
+                    example: "team"
+                    description: the plan code
+                  title:
+                    type: string
+                    example: "Team"
+                    description: The plan title
+                  description:
+                    type: string
+                    example: "this plan works for a mid sized company"
+                    description: The plan description
+                  price_monthly:
+                    type: number
+                    example: 299
+                    description: The plan monthly price
+                  price_yearly:
+                    type: number
+                    example: 299
+                    description: The plan yearly price
+                  max_translations:
+                    type: integer
+                    example: 25000
+                    description: The plan max translations
+                  max_projects:
+                    type: integer
+                    example: 25
+                    description: The plan max amount of projects
+                  max_requests_edit:
+                    type: integer
+                    example: 25
+                    description: The plan max edit requests per month
+                  max_requests_get:
+                    type: integer
+                    example: 25
+                    description: The plan max get requests per month
+   
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 
+
+  responses:
+    UnauthorizedError:
+      description: invalid credentials error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/auth-login-failure'

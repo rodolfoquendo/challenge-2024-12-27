@@ -1,0 +1,4 @@
+vendor
+.env
+src/tests-results/*
+src/public/__TEST__

@@ -1,0 +1,31 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: db-test
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=87654321
+      - MYSQL_DATABASE=test
+      - MYSQL_USER=dev
+      - MYSQL_PASSWORD=12345678
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      interval: 5s
+      timeout: 20s
+      retries: 30
+      start_period: 60s
+  php:
+    image: 368539636127.dkr.ecr.us-east-2.amazonaws.com/roquendo/php8-test:latest
+    build:
+      dockerfile: ../images/Dockerfile.php8-test
+      context: .
+    container_name: php-test
+    platform: linux/amd64
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ../src:/platform
+    env_file:
+      - ../env/.env-test  

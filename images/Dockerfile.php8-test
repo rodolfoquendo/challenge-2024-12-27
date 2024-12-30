@@ -1,0 +1,8 @@
+FROM 368539636127.dkr.ecr.us-east-2.amazonaws.com/roquendo/php8:latest
+
+RUN pecl install xdebug
+COPY images/configs/php/php.test.ini /usr/local/etc/php/php.ini
+
+RUN adduser -D gitlab-runner
+RUN chgrp gitlab-runner /platform 
+RUN chmod g+rwx /platform 
