@@ -69,7 +69,14 @@ class UserService extends ServiceBase
      */
     public function update(User $user, Plan $plan,  string $name, string $email, string $password): User
     {
+        if(!$plan->isEnabled()){
+            abort(422, "Plan disabled");
+        }
+        if($plan->id !== Plan::FREE && $plan->id != $user->plan_id && !$this->userIsMaster()){
+            abort(403, 'You are not enabled to set that plan');
+        }
         $user->plan_id = $plan->id;
+        $user->email = $email;
         $user->password = Hash::make($password);
         $user->name = $name;
         $user->save();

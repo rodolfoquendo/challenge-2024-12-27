@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\User;
 
-class Roquendo
+class MasterUser
 {
     use \App\Traits\Http;
     public function handle(\Illuminate\Http\Request $request, \Closure $next)

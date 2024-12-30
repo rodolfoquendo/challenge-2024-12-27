@@ -57,5 +57,21 @@ class UserController extends Controller
         }
     }
 
+    public function updateOther(Request $request){
+        try {
+            $user = $this->userService()->getByEmail($request->email);
+            return $this->success($this->userService()
+                ->update(
+                    $user,
+                    $request->plan_id, 
+                    $request->name, 
+                    $request->email, 
+                    $request->password
+                ));   
+        } catch ( \Exception $e ) {
+            return $this->error($e);
+        }
+    }
+
 
 }

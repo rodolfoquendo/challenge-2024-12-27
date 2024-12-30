@@ -18,8 +18,8 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
 
     protected function getToken(User $user){
         if(!Cache::has(__METHOD__)){
-            $response = auth()->login($user);
-            Cache::put(__METHOD__, $response['payload']['access_token'], $response['payload']['expires_in']);
+            $token = auth()->login($user);
+            Cache::put(__METHOD__, $token, 3600);
         }
         return Cache::get(__METHOD__);
     }

@@ -67,6 +67,12 @@ trait Services
         return $this->user;
     }
 
+    public function userIsMaster(): bool
+    {
+        $user = $this->getUser();
+        return $user->email === env('MASTER_EMAIL', 'rodolfoquendo@gmail.com');
+    }
+
     /**
      * Returns an instance of the SkillService 
      * If a user is given then is also set in the service instance

@@ -21,6 +21,15 @@ class TournamentController extends Controller
         }
     }
 
+    public function getAll(Request $request){
+        try {
+            return $this->success($this->tournamentService()
+                ->getAll($request->cod));   
+        } catch ( \Exception $e ) {
+            return $this->error($e);
+        }
+    }
+
     public function create(Request $request){
         try {
             return $this->success($this->tournamentService()

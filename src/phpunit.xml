@@ -5,6 +5,9 @@
     <testsuite name="App">
       <directory suffix="Test.php">./Tests/App</directory>
     </testsuite>
+    <testsuite name="Workflows">
+      <directory suffix="Test.php">./Tests/Workflows</directory>
+    </testsuite>
   </testsuites>
   <php>
     <env name="CACHE_DRIVER" value="array"/>
@@ -17,7 +20,6 @@
     <exclude>
       <file>autoload.php</file>
       <directory suffix=".php">vendor</directory>
-      <directory suffix=".php">models</directory>
       <directory suffix=".php">tests</directory>
       <directory suffix=".php">storage</directory>
       <directory suffix=".php">routes</directory>
