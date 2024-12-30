@@ -162,7 +162,7 @@ DONE:
     - if: $CI_COMMIT_BRANCH == "master"
     - if: $CI_COMMIT_BRANCH == "main"
 
-beta-build:
+.beta-build:
   stage: build
   hooks:
     pre_get_sources_script:
@@ -173,7 +173,7 @@ beta-build:
   rules:
     - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
 
-beta-push:
+.beta-push:
   stage: push
   hooks:
     pre_get_sources_script:
@@ -185,7 +185,7 @@ beta-push:
   rules:
     - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
 
-beta-deploy:
+.beta-deploy:
   stage: deploy
   hooks:
     pre_get_sources_script:
@@ -197,7 +197,7 @@ beta-deploy:
   rules:
     - if: $CI_COMMIT_BRANCH  =~ /^release_s[0-9]+$/
 
-prod-build:
+.prod-build:
   stage: build
   hooks:
     pre_get_sources_script:
@@ -209,7 +209,7 @@ prod-build:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_COMMIT_BRANCH == "master"
 
-prod-push:
+.prod-push:
   stage: push
   hooks:
     pre_get_sources_script:
@@ -222,7 +222,7 @@ prod-push:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_COMMIT_BRANCH == "master"
 
-prod-deploy:
+.prod-deploy:
   stage: deploy
   hooks:
     pre_get_sources_script:

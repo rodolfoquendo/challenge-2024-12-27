@@ -23,3 +23,5 @@ Route::get('/', function () {
         'date'     => date('Y-m-d H:i:s'),
     ]);
 });
+
+Route::view('/docs','swagger');

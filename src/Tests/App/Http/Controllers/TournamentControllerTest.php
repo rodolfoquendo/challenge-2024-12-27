@@ -5,7 +5,7 @@ namespace Tests\App\Http\Controllers;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 
-class AuthControllerTest extends \Tests\TestCase
+class TournamentControllerTest extends \Tests\TestCase
 {
 
     /**

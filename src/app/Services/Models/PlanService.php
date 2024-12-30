@@ -21,6 +21,7 @@ class PlanService extends ServiceBase
      */
     public function getByCod(string $cod): ?Plan
     {
+        $cod = \strtolower($cod);
         $cacheKey = md5(__METHOD__ . $cod);
         if(!Cache::has($cacheKey)){
             Cache::forever($cacheKey, Plan::where('cod', $cod)->first());

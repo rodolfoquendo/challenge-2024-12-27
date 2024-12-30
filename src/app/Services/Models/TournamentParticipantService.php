@@ -4,6 +4,7 @@ namespace App\Services\Models;
 use App\Models\Participant;
 use App\Models\Tournament;
 use App\Models\TournamentParticipant;
+use App\Models\UserStatistic;
 use App\Services\ServiceBase;
 use DateTime;
 
@@ -36,13 +37,15 @@ class TournamentParticipantService extends ServiceBase
      */
     public function add(Tournament $tournament, Participant $participant): TournamentParticipant
     {
-       
         $user = $this->getUser();
         if($tournament->user_id !== $user->id){
             abort(422, "Tournament does not exists for user");
         }
-        if(!$this->statisticsService()->check('participants')){
-            abort(429, "You have reached the participants limit");
+        if($tournament->gender_id != $participant->gender_id){
+            abort(422, "Participant must be the same gender as the tournament");
+        }
+        if(!$this->statisticsService()->check(UserStatistic::PARTICIPANTS)){
+            abort(429, "Participant limit reached");
         }
         $tournamentParticipant = TournamentParticipant::where('participant_id', $participant->id)
             ->where('tournament_id', $tournament->id)
@@ -53,7 +56,6 @@ class TournamentParticipantService extends ServiceBase
             $tournamentParticipant->participant_id = $participant->id;
             $tournamentParticipant->save();
         }
-        $this->statisticsService()->add('participants');
         return $tournamentParticipant;
     }
 
@@ -73,8 +75,7 @@ class TournamentParticipantService extends ServiceBase
         $tournamentParticipant = TournamentParticipant::where('participant_id', $participant->id)
             ->where('tournament_id', $tournament->id)
             ->first();
-        $this->statisticsService()->remove('participants',1);
-        return !$tournamentParticipant instanceof TournamentParticipant || $tournament->delete();
+        return !$tournamentParticipant instanceof TournamentParticipant || $tournamentParticipant->delete();
     }
 
     /**
@@ -91,7 +92,6 @@ class TournamentParticipantService extends ServiceBase
     {
         $count = TournamentParticipant::where('tournament_id', $tournament->id)->count();
         TournamentParticipant::where('tournament_id', $tournament->id)->delete();
-        $this->statisticsService()->remove('participants',$count);
         return TournamentParticipant::where('tournament_id', $tournament->id)->count() == 0;
     }
 
@@ -108,6 +108,10 @@ class TournamentParticipantService extends ServiceBase
      */
     public function moveParticipants(Tournament $from, Tournament $to): bool
     {
+        $user = $this->getUser();
+        if($from->user_id != $user->id || $to->user_id != $user->id){
+            abort(403, "Both tournaments must be from the user");
+        }
         $participantsFrom = TournamentParticipant::where('tournament_id', $from->id)->get();
         $participantsTo   = function ($participants = []) use ($to){
             /** @var TournamentParticipant $tournamentParticipant */
@@ -126,7 +130,6 @@ class TournamentParticipantService extends ServiceBase
                 $tournamentParticipant->save();
             }else{
                 $tournamentParticipant->delete();
-                $this->statisticsService()->remove('participants',1);
             }
         }
         return TournamentParticipant::where('tournament_id', $from->id)->count() == 0

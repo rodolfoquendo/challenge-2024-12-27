@@ -23,6 +23,9 @@ class UserStatistic extends Model
 {
     use SoftDeletes;
 
+    const TOURNAMENTS = 'tournaments';
+    const PARTICIPANTS = 'participants';
+
     protected $table = 'user_statistics';
     
     public function user()

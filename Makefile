@@ -1,5 +1,6 @@
 SHELL=/bin/bash
 DOCKER_COMPOSE_TEST=docker/test.yml
+DOCKER_COMPOSE_DEV=docker/dev.yml
 APP_NAME="challenge-2024-12-27"
 IMAGE_NAME_BETA="challenge-2024-12-27-beta"
 IMAGE_NAME_PROD="challenge-2024-12-27-prod"
@@ -66,6 +67,12 @@ push-prod:
 
 coverage:
 	@open src/public/__TEST__/index.html
+run:	
+	# @make build-base
+	@docker rm -f -v db-test php-test
+	@rm -rf src/bootstrap/cache/* src/storage/framework/cache/*
+	@docker-compose -p $(APP_NAME) -f $(DOCKER_COMPOSE_DEV) up -d --force-recreate --remove-orphans 
+
 test:	
 	# @make build-base
 	@docker rm -f -v db-test php-test

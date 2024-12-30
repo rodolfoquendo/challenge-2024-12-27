@@ -25,7 +25,7 @@ class EmailValidationService extends ServiceBase
      * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
      * @copyright 2024 Rodolfo Oquendo
      */
-    private function sanitize(string $email): string
+    public function sanitize(string $email): string
     {
         return trim(\strtolower($email));
     }

@@ -4,6 +4,7 @@ namespace App\Traits;
 use App\Exceptions\UserNotSet;
 use App\Models\User;
 use App\Services\Features\TournamentFeatureService;
+use App\Services\Models\ParticipantSkillsService;
 use App\Services\Models\PlanService;
 use App\Services\Models\SkillService;
 use App\Services\Models\StatisticsService;
@@ -24,7 +25,7 @@ trait Services
      *
      * @param  \App\Models\User $user This is for that
      *
-     * @return void                   This returns if this happens
+     * @return self
      *
      * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
      * @copyright 2024 
@@ -33,6 +34,19 @@ trait Services
     {
         $this->user = $user;
         return $this;
+    }
+
+    /**
+     * Checks if the user is authenticated (and set to the service)
+     *
+     * @return bool
+     *
+     * @author Rodolfo Oquendo <roquendo@afluenta.com>
+     * @copyright 2024 Afluenta
+     */
+    public function sessionIsSet(): bool
+    {
+        return $this->user instanceof User;
     }
 
     /**
@@ -114,6 +128,22 @@ trait Services
     public function planService(?User $user = null): PlanService
     {
         return $this->getService(PlanService::class, $user);
+    }
+
+    /**
+     * Returns an instance of the ParticipantSkillsService 
+     * If a user is given then is also set in the service instance
+     *
+     * @param  \App\Models\User|null            $user The user that will use the service
+     *
+     * @return \App\Services\Models\ParticipantSkillsService       The service instance with the user set (if given)
+     *
+     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
+     * @copyright 2024 
+     */
+    public function participantSkillsService(?User $user = null): ParticipantSkillsService
+    {
+        return $this->getService(ParticipantSkillsService::class, $user);
     }
 
     /**

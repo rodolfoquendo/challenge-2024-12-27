@@ -12,7 +12,7 @@ class TournamentFeatureService extends ServiceBase
         if(strtotime($tournament->starts_at) > time() || strtotime($tournament->ends_at) > time()){
             return false;
         }
-        $tournamentParticipants = $this->tournamentParticipantService()->get($tournament,['participant']);
+        $tournamentParticipants = $this->tournamentParticipantService()->get($tournament,['participant','participant.participantSkills','participant.participantSkills.skill']);
         if(!$this->participantAmountCheck(count($tournamentParticipants))){
             return false;
         }
@@ -23,7 +23,8 @@ class TournamentFeatureService extends ServiceBase
         foreach($tournamentParticipants as $tournamentParticipant){
             $participants[] = $tournamentParticipant->participant;
         }
-        return $this->tournamentStepsService()->add($tournament, $participants);
+        $calculated = $this->tournamentStepsService()->add($tournament, $participants);
+        return $calculated;
     }
 
     public function participantAmountCheck(int $participantAmount)

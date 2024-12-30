@@ -5,10 +5,12 @@ use App\Exceptions\PlanLimitNotValid;
 use App\Exceptions\StatNotValid;
 use App\Models\Plan;
 use App\Models\Skill;
+use App\Models\Tournament;
 use App\Models\User;
 use App\Models\UserStatistic;
 use App\Services\ServiceBase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class StatisticsService extends ServiceBase
 {
@@ -46,6 +48,9 @@ class StatisticsService extends ServiceBase
             $stat->date = date('Y-m');
             $stat->save();
         }
+        $stat->tournaments = Tournament::where('user_id', $user->id)->count();
+        $stat->participants = DB::scalar("SELECT count(id) from tournament_participants where tournament_id IN (select id from tournaments where user_id = ?)",[$user->id]);
+        $stat->save();
         return $stat;
     }
 
@@ -63,65 +68,12 @@ class StatisticsService extends ServiceBase
     {
         $stat = $this->current();
         $plan = $this->plan();
-        $this->checkPropertyExists($stat, $plan, $cod);
-        return is_null($plan->cod) || $stat->$cod < $plan->$cod;
-    }
-
-    /**
-     * Adds an amount to current statistics
-     *
-     * @param  string $cod the statistic code
-     *
-     * @return bool        if added (saved)
-     *
-     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
-     * @copyright 2024 Rodolfo Oquendo
-     */
-    public function add(string $cod, int $amount = 1): bool
-    {
-        $stat = $this->current();
-        $this->checkPropertyExists($stat, cod: $cod);
-        $stat->$cod += $amount;
-        return $stat->save();
-    }
-
-    /**
-     * Removes an amount to current statistics
-     *
-     * @param  string $cod the statistic code
-     *
-     * @return bool        if added (saved)
-     *
-     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
-     * @copyright 2024 Rodolfo Oquendo
-     */
-    public function remove(string $cod, int $amount = 1): bool
-    {
-        return $this->add($cod, $amount * -1);
-    }
-
-    /**
-     * Checks if the given cod exists in plan and stats
-     *
-     * @param  \App\Models\UserStatistic $stat The statistics
-     * @param  \App\Models\Plan|null     $plan The plan 
-     * @param  string                    $cod  The cod to check
-     *
-     * @return void                            
-     * 
-     * @throws \App\Exceptions\StatNotValid      If the stat property does not exists
-     * @throws \App\Exceptions\PlanLimitNotValid If the plan limit does not exists
-     *
-     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
-     * @copyright 2024 Rodolfo Oquendo
-     */
-    private function checkPropertyExists(UserStatistic $stat, ?Plan $plan = null, string $cod)
-    {
-        if(!isset($stat->$cod)){
+        if(!array_key_exists($cod, $stat->toArray())){
             throw new StatNotValid($cod);
         }
-        if(!isset($plan->$cod)){
+        if(!is_null($plan) && !array_key_exists($cod, $plan->toArray())){
             throw new PlanLimitNotValid($cod);
         }
+        return is_null($plan->$cod) || $stat->$cod < $plan->$cod;
     }
 }

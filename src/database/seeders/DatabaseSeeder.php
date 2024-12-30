@@ -34,14 +34,17 @@ class DatabaseSeeder extends Seeder
                 [
                     'starts_at' => date('Y-m-d 00:00:00'),
                     'ends_at' => date('Y-m-d 00:00:01'),
+                    'gender_id' => fn($x) => rand(1,2)
                 ],
                 [
                     'starts_at' => date('Y-m-d 00:00:00', time() - (24 * 3600)),
                     'ends_at' => date('Y-m-d 00:00:01', time() - (24 * 3600)),
+                    'gender_id' => fn($x) => rand(1,2)
                 ],
                 [
                     'starts_at' => date('Y-m-d 00:00:00', time() + (24 * 3600)),
                     'ends_at' => date('Y-m-d 00:00:01', time() + (24 * 3600)),
+                    'gender_id' => fn($x) => rand(1,2)
                 ],
             ))
             ->create();

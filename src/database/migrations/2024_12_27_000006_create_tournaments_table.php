@@ -18,6 +18,7 @@ return new class extends Migration
         Schema::create('tournaments', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('gender_id');
             $table->string('cod');
             $table->string('title');
             $table->timestamp('starts_at');
@@ -28,6 +29,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
             $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('gender_id')->references('id')->on('genders');
         });
     }
 

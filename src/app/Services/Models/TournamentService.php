@@ -1,9 +1,13 @@
 <?php 
 namespace App\Services\Models;
 
+use App\Models\Gender;
+use App\Models\Participant;
 use App\Models\Plan;
 use App\Models\Tournament;
+use App\Models\TournamentStep;
 use App\Models\User;
+use App\Models\UserStatistic;
 use App\Services\ServiceBase;
 use DateTime;
 use Illuminate\Support\Facades\Cache;
@@ -16,7 +20,7 @@ class TournamentService extends ServiceBase
      *
      * @param  string                 $cod The plan cod
      *
-     * @return \App\Models\Plan|null       The plan if exists
+     * @return \App\Models\Tournament|null       The plan if exists
      *
      * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
      * @copyright 2024 Rodolfo Oquendo
@@ -33,6 +37,7 @@ class TournamentService extends ServiceBase
     /**
      * Undocumented function
      *
+     * @param  Gender                $gender           The gender of the participats 
      * @param  string                $cod              the tournament shortcode
      * @param  string                $title            the tournament title
      * @param  \DateTime|string|null $starts_at        the start date
@@ -47,6 +52,7 @@ class TournamentService extends ServiceBase
      * @copyright 2024 Rodolfo Oquendo
      */
     public function create(
+        Gender $gender,
         string $cod, 
         string $title, 
         DateTime|string|null $starts_at = null, 
@@ -57,19 +63,18 @@ class TournamentService extends ServiceBase
     ): Tournament
     {
         $cod = \strtolower(trim($cod));
-        $starts_at = $starts_at instanceof DateTime ? $starts_at->format('Y-m-d H:i:s') : $starts_at;
-        $starts_at = is_null($starts_at) ? date("Y-m-d H:i:s") : $starts_at;
-        $ends_at = $ends_at instanceof DateTime ? $ends_at->format('Y-m-d H:i:s') : $ends_at;
-        $ends_at = is_null($ends_at) ? date("Y-m-d H:i:s") : $ends_at;
         $user = $this->getUser();
         $tournament = $this->getByCod($cod);
         if($tournament instanceof Tournament){
             abort(422, 'Tournament already exists');
         }
+        if(!$this->statisticsService($this->getUser())->check(UserStatistic::TOURNAMENTS)){
+            abort(429, "Tournaments limit reached");
+        }
         $tournament = new Tournament();
         $tournament->user_id = $user->id;
+        $tournament->gender_id = $gender->id;
         $tournament->cod = $cod;
-        $this->statisticsService()->add('tournaments',1);
         return $this->update(
             $tournament, 
             $title, 
@@ -82,7 +87,7 @@ class TournamentService extends ServiceBase
     }
 
     /**
-     * Updates a torunament
+     * Updates a tournament
      *
      * @param  \App\Models\Tournament $tournament       The tournament to be updated
      * @param  string                 $title            The tournament title
@@ -107,6 +112,10 @@ class TournamentService extends ServiceBase
         int $max_winners = 1 
     ): Tournament
     {
+        $starts_at = $starts_at instanceof DateTime ? $starts_at->format('Y-m-d H:i:s') : $starts_at;
+        $starts_at = is_null($starts_at) ? date("Y-m-d H:i:s") : $starts_at;
+        $ends_at = $ends_at instanceof DateTime ? $ends_at->format('Y-m-d H:i:s') : $ends_at;
+        $ends_at = is_null($ends_at) ? date("Y-m-d H:i:s") : $ends_at;
         $tournament->title = $title;
         $tournament->starts_at = $starts_at;
         $tournament->ends_at = $ends_at;
@@ -115,6 +124,28 @@ class TournamentService extends ServiceBase
         $tournament->max_winners = $max_winners;
         $tournament->save();
         return $tournament;
+    }
+
+    public function getWinner(Tournament $tournament): ?Participant
+    {
+        $lastStep = $this->tournamentStepsService()
+            ->lastStep($tournament);
+        if(!$lastStep instanceof TournamentStep){
+            return null;
+        }
+        $result = \json_decode($lastStep->result, false);
+        $highest = 0;
+        $winner_id = null;
+        foreach($result as $participants){
+            foreach($participants as $participantData){
+                $participantData = (object)$participantData;
+                if($participantData->total > $highest){
+                    $winner_id = $participantData->id;
+                    $highest = $participantData->total;
+                }
+            }
+        }
+        return Participant::find($winner_id);
     }
 
 }

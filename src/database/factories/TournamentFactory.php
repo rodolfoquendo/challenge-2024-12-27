@@ -24,6 +24,9 @@ class TournamentFactory extends Factory
         return $this->afterCreating(function (Tournament $tournament) {
             /** @var Participant $participant */
             foreach(Participant::get() as $participant){
+                if($participant->gender_id !== $tournament->gender_id){
+                    continue;
+                }
                 TournamentParticipant::create([
                     'tournament_id' => $tournament->id,
                     'participant_id' => $participant->id,

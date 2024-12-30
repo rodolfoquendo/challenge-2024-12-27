@@ -15,7 +15,7 @@ class TournamentStepTest extends \Tests\TestCase
 {
     public function test__structure(){
         $this->createApplication();
-        $user = User::find(1);
+        $user = $this->limitlessUser();
         $tournament = Tournament::find(1);
         $this->tournamentFeatureService($user)
             ->calculateResult($tournament);

@@ -24,6 +24,7 @@ class TournamentTest extends \Tests\TestCase
         $this->assertTrue(isset($model->entry_fee));
         $this->assertTrue(isset($model->max_winners));
         $this->assertTrue(is_null($model->max_participants));
+        $this->assertTrue($model->gender instanceof Gender);
         $this->assertTrue($model->user instanceof User);
         $this->assertTrue(count($model->tournamentParticipants) > 0);
         foreach($model->tournamentParticipants as $tournamentParticipant){

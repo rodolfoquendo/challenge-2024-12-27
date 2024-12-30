@@ -16,6 +16,7 @@ use \Illuminate\Database\Eloquent\SoftDeletes;
  * 
  * @property int    $id
  * @property int    $user_id
+ * @property int    $gender_id
  * @property string $cod
  * @property string $title
  * @property string $starts_at
@@ -49,6 +50,11 @@ class Tournament extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function gender()
+    {
+        return $this->belongsTo(Gender::class, 'gender_id');
     }
 
     public function tournamentParticipants()
