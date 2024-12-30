@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\Roquendo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -33,25 +34,33 @@ Route::group([
         Route::group([
             'prefix' => 'users'
         ], function ($router) {
-        
-            // Route::post('upload',[FileController::class,'upload']);
-        
+
+            Route::patch('update',[UserController::class,'update']);
+
+            Route::group([
+                'prefix' => 'admin',
+                'middleware' => Roquendo::class
+            ], function ($router) {
+                Route::put('create',[UserController::class,'create']);
+                Route::patch('update',[UserController::class,'updateOther']);
+            });
         });
-    });
-    Route::group([
-        'middleware' => 'auth:api',
-        'prefix' => 'tournaments'
-    ], function ($router) {
-    
-        
         Route::group([
-            'middleware' => 'auth:api',
-            'prefix' => 'participants'
+            'prefix' => 'tournaments'
         ], function ($router) {
-        
-            // Route::post('upload',[FileController::class,'upload']);
+
+            Route::get('/',[TournamentController::class,'create']);
+
+            Route::group([
+                'prefix' => 'participants'
+            ], function ($router) {
+            
+                // Route::post('upload',[FileController::class,'upload']);
+            
+            });
         
         });
-    
     });
+    
+    
 });

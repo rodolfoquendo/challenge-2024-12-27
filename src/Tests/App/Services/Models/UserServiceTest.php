@@ -16,15 +16,15 @@ class UserServiceTest extends \Tests\TestCase
         $this->assertTrue($this->userService()->getByEmail('asd@asd.asd') == null);
         $this->assertTrue($this->userService()->getByEmail('rodolfoquendo@gmail.com') instanceof User);
     }
-    public function test__createOrUpdate(){
+    public function test__create(){
         $this->createApplication();
         $plan = Plan::findCached(Plan::UNLIMITED);
-        $this->assertTrue($this->userService()->createOrUpdate($plan, 'Rodolfo','asd', '12345678') == null);
-        $this->assertTrue($this->userService()->createOrUpdate($plan, 'Rodolfo','asd@', '12345678') == null);
-        $this->assertTrue($this->userService()->createOrUpdate($plan, 'Rodolfo','asd@asd', '12345678') == null);
-        $this->assertTrue($this->userService()->createOrUpdate($plan, 'Rodolfo','asd@asd.', '12345678') == null);
-        $this->assertTrue($this->userService()->createOrUpdate($plan, 'Rodolfo','asd@asd.asd', '12345678') == null);
-        $this->assertTrue($this->userService()->createOrUpdate($plan, 'Rodolfo','rodolfoquendor@gmail.com', '12345678') instanceof User);
+        $this->assertTrue($this->userService()->create($plan, 'Rodolfo','asd', '12345678') == null);
+        $this->assertTrue($this->userService()->create($plan, 'Rodolfo','asd@', '12345678') == null);
+        $this->assertTrue($this->userService()->create($plan, 'Rodolfo','asd@asd', '12345678') == null);
+        $this->assertTrue($this->userService()->create($plan, 'Rodolfo','asd@asd.', '12345678') == null);
+        $this->assertTrue($this->userService()->create($plan, 'Rodolfo','asd@asd.asd', '12345678') == null);
+        $this->assertTrue($this->userService()->create($plan, 'Rodolfo','rodolfoquendor@gmail.com', '12345678') instanceof User);
     }
     public function test__getPlan(){
         $this->createApplication();

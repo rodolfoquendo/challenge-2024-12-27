@@ -17,7 +17,9 @@ class TournamentParticipantService extends ServiceBase
         if($tournament->user_id !== $user->id){
             abort(422, "Tournament does not exists for user");
         }
-        return TournamentParticipant::with($eagerLoads)->where('tournament_id', $tournament->id)->get();
+        return TournamentParticipant::with($eagerLoads)
+            ->where('tournament_id', $tournament->id)
+            ->get();
     }
     /**
      * Adds a participant to a tournament
@@ -90,7 +92,6 @@ class TournamentParticipantService extends ServiceBase
      */
     public function removeAll(Tournament $tournament): bool
     {
-        $count = TournamentParticipant::where('tournament_id', $tournament->id)->count();
         TournamentParticipant::where('tournament_id', $tournament->id)->delete();
         return TournamentParticipant::where('tournament_id', $tournament->id)->count() == 0;
     }
