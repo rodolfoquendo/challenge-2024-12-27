@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\TournamentController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\MasterUser;
@@ -60,6 +61,13 @@ Route::group([
                 // Route::post('upload',[FileController::class,'upload']);
             
             });
+        
+        });
+        Route::group([
+            'prefix' => 'participants'
+        ], function ($router) {
+
+            Route::get('/',[ParticipantController::class,'get']);
         
         });
     });

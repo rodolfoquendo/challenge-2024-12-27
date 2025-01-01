@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ParticipantFormRequest;
+use App\Http\Requests\ParticipantGetRequest;
 use App\Models\Gender;
 use App\Models\Plan;
 use App\Models\Tournament;
@@ -12,16 +14,16 @@ use Illuminate\Http\Request;
 class ParticipantController extends Controller
 {
 
-    public function get(Request $request){
+    public function get(ParticipantGetRequest $request){
         try {
-            return $this->success($this->tournamentService()
-                ->getByCod($request->cod));   
+            return $this->success($this->participantService()
+                ->get($request->name));   
         } catch ( \Exception $e ) {
             return $this->error($e);
         }
     }
 
-    public function create(Request $request){
+    public function create(ParticipantFormRequest $request){
         try {
             return $this->success($this->participantService()
                 ->create(
@@ -34,7 +36,7 @@ class ParticipantController extends Controller
     }
 
 
-    public function update(Request $request){
+    public function update(ParticipantFormRequest $request){
         try {
             return $this->success($this->participantService()
                 ->update(
