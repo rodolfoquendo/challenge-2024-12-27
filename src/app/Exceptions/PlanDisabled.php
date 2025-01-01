@@ -1,6 +1,6 @@
 <?php 
 namespace App\Exceptions;
 
-class PlanLimitNotValid extends BaseException{
+class PlanDisabled extends BaseException{
     protected $code = 422;
 }

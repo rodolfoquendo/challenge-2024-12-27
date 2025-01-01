@@ -25,7 +25,7 @@ class AuthController extends Controller
         try {
             $user = $this->userService()->getByEmail($request->email);
             if (!$user instanceof User || !Hash::check($request->password, $user->password)) {
-                abort(401);
+                return $this->response('Unauthorized', 401);
             }
             $token = auth()->login($user);
             return $this->success([

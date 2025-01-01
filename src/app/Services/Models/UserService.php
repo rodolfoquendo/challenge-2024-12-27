@@ -1,6 +1,8 @@
 <?php 
 namespace App\Services\Models;
 
+use App\Exceptions\PlanDisabled;
+use App\Exceptions\Unauthorized;
 use App\Models\Plan;
 use App\Models\Skill;
 use App\Models\User;
@@ -70,10 +72,19 @@ class UserService extends ServiceBase
     public function update(User $user, Plan $plan,  string $name, string $email, string $password): User
     {
         if(!$plan->isEnabled()){
-            abort(422, "Plan disabled");
+            throw new PlanDisabled($plan->cod);
         }
-        if($plan->id !== Plan::FREE && $plan->id != $user->plan_id && !$this->userIsMaster()){
-            abort(403, 'You are not enabled to set that plan');
+        if(!$this->emailValidationService()->validate($email)){
+            abort(422,"Invalid Email");
+        }
+        $isMe = $user->id === $this->getUser()->id;
+        if(!$isMe && !$this->userIsMaster()){
+            throw new Unauthorized("updating other user");
+        }
+        $planIsChanging = $plan->id !== $user->plan_id;
+        $planIsFree = $plan->id === Plan::FREE;
+        if($planIsChanging && !$planIsFree &&  !$this->userIsMaster()){
+            throw new Unauthorized("Invalid plan change");
         }
         $user->plan_id = $plan->id;
         $user->email = $email;

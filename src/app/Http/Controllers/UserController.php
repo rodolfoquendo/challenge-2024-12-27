@@ -60,10 +60,11 @@ class UserController extends Controller
     public function updateOther(Request $request){
         try {
             $user = $this->userService()->getByEmail($request->email);
+            $plan = Plan::findCached($request->plan_id);
             return $this->success($this->userService()
                 ->update(
                     $user,
-                    $request->plan_id, 
+                    $plan, 
                     $request->name, 
                     $request->email, 
                     $request->password

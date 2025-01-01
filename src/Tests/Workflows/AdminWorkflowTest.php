@@ -63,7 +63,7 @@ class AdminWorkflowTest extends \Tests\TestCase
             'email' => 'r.odolfoquendo@gmail.com',
             'password' => '87654321',
         ];
-        $response = $this->patch($this->APIRoute_v1('users/admin/update'),$data, $this->limitlessHeader());
+        $response = $this->patchJson($this->APIRoute_v1('users/admin/update'),$data, $this->limitlessHeader());
         $response->assertOk();
         $response = $response->json();
         $this->assertTrue(isset($response['success']));
@@ -81,7 +81,7 @@ class AdminWorkflowTest extends \Tests\TestCase
         $this->createApplication();
         $data = [
             'plan_id' => Plan::UNLIMITED,
-            'name' => 'Rodolfo Alejandro ',
+            'name' => 'Rodolfo Alejandro',
             'email' => 'r.odolfoquendo@gmail.com',
             'password' => '12345678',
         ];

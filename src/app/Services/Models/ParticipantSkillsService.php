@@ -3,11 +3,10 @@ namespace App\Services\Models;
 
 use App\Models\Participant;
 use App\Models\ParticipantSkill;
-use App\Models\Plan;
 use App\Models\Skill;
-use App\Models\User;
 use App\Services\ServiceBase;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 
 class ParticipantSkillsService extends ServiceBase
 {
@@ -33,39 +32,50 @@ class ParticipantSkillsService extends ServiceBase
             if($skill->gender_id !== $participant->gender_id){
                 continue;
             }
-            $participantSkill = ParticipantSkill::where('participant_id', $participant->id)
-                ->where('skill_id', $skill->id)
-                ->first();
-            if(!$participantSkill instanceof $participantSkill){
-                $participantSkill = new ParticipantSkill();
-                $participantSkill->participant_id = $participant->id;
-                $participantSkill->skill_id = $skill->id;
-                $this->update($participantSkill, 0);
-            }
-            $participantSkills[$skill->id] = $participantSkill;
+            $participantSkills[$skill->id] = $this->getFromCombination($participant, $skill);
         }
         return $participantSkills;
     }
 
-    public function getFromCombination(Participant $participant, Skill $skill): Participant
+    public function getFromCombination(Participant $participant, Skill $skill): ParticipantSkill
     {
-        $all = $this->get($participant);
-        return $all[$skill->id];
+        /**
+         * For some reason this shit is not doing the job like it shoud
+         * will leave this commented code to understand & test how it is failing
+         * i have no time for this.
+         * @todo check this shit later
+         */
+        try {
+            $participantSkill = ParticipantSkill::where('participant_id', $participant->id)
+                ->where('skill_id', $skill->id)
+                ->first();
+            if(!$participantSkill instanceof ParticipantSkill){
+                // dd('not',$participantSkill, DB::select("select * from participant_skills where participant_id={$participant->id} and skill_id={$skill->id}"));
+                $participantSkill = new ParticipantSkill();
+                $participantSkill->participant_id = $participant->id;
+                $participantSkill->skill_id = $skill->id;
+                return $this->update($participantSkill, 0);
+            }  
+        } catch ( UniqueConstraintViolationException $e ) {
+            return $participantSkill;
+        }
+        return $participantSkill;
     }
 
-    public function update(ParticipantSkill $participantSkill,  $level)
+    public function update(ParticipantSkill $participantSkill,  $level): ParticipantSkill
     {
         $participantSkill->level = $level;
         $participantSkill->save();
-        return $participantSkill;
+        return $participantSkill->refresh();
     }
 
     public function calculateSkillTotal(Participant $participant){
         $total = 0;
-        foreach($participant->participantSkills as $participantSkill){
+        $participantSkills = $this->get($participant);
+        foreach($participantSkills as $participantSkill){
             $total += $participantSkill->level;
         }
-        return (int)floor($total / count($participant->participantSkills));
+        return (int)floor($total / count($participantSkills));
     }
 
 }

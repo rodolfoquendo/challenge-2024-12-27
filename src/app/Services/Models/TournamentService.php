@@ -38,7 +38,7 @@ class TournamentService extends ServiceBase
     /**
      * Gets all the tournaments for the user
      *
-     * @return Illuminate\Database\Eloquent\Collection|null 
+     * @return Illuminate\Database\Eloquent\Collection|array 
      *
      * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
      * @copyright 2024 Rodolfo Oquendo

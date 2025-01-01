@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
@@ -32,6 +33,24 @@ class User extends Model implements JWTSubject, Authenticatable
     use AuthenticatableTrait // Laravel provided trait
         , SoftDeletes; 
 
+
+    /**
+     * Returns the master user
+     * This was set up on user table migration
+     * So we know for certain that 1 is the id
+     *
+     * @return User The master user, the owner, the company
+     *
+     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
+     * @copyright 2024 Rodolfo Oquendo
+     */
+    public static function master(): User
+    {
+        if(!Cache::has(__METHOD__)){
+            Cache::forever(__METHOD__, User::find(1));
+        }
+        return Cache::get(__METHOD__);
+    }
     public function getCustomDataAttribute ($value) {
         /**
          * First check if the custom_data exists in jwt payload

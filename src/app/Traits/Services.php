@@ -67,10 +67,19 @@ trait Services
         return $this->user;
     }
 
-    public function userIsMaster(): bool
+    /**
+     * Checks if the user is the app owner
+     *
+     * @return bool 
+     *
+     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
+     * @copyright 2024 Rodolfo Oquendo
+     */
+    public function userIsMaster(?User $user = null): bool
     {
-        $user = $this->getUser();
-        return $user->email === env('MASTER_EMAIL', 'rodolfoquendo@gmail.com');
+        $user = is_null($user) ? $this->getUser() : $user;
+        $master = User::master();
+        return $user->id == $master->id;
     }
 
     /**
@@ -264,12 +273,12 @@ trait Services
     private function getService(string $service, ?User $user = null){
         if (empty(self::$serviceInstances[$service])) {
             self::$serviceInstances[$service] = app()->make($service);
-            if(!$this->user instanceof User){
-                $this->user = auth()->user();
-            }
-            if ($this->user instanceof User) {
-                self::$serviceInstances[$service]->setUser($this->user);
-            }
+        }
+        if(!$this->user instanceof User){
+            $this->user = auth()->user();
+        }
+        if ($this->user instanceof User) {
+            self::$serviceInstances[$service]->setUser($this->user);
         }
         if ($user instanceof User) {
             self::$serviceInstances[$service]->setUser($user);

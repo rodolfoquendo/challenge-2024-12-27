@@ -3,8 +3,10 @@
 namespace App\Traits;
 
 use App\Exceptions\AuthInvalidCredentials;
+use App\Exceptions\BaseException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 trait Http 
 {  
@@ -34,6 +36,8 @@ trait Http
             $payload['stack'] = $error->getTrace();
         }
         $httpCode = $error instanceof AuthInvalidCredentials ? Response::HTTP_I_AM_A_TEAPOT : $httpCode;
+        $httpCode = $error instanceof BaseException ? $error->getCode() : $httpCode;
+        $httpCode = $error instanceof HttpException ? $error->getStatusCode() : $httpCode;
         return $this->response($payload, $httpCode);
     }
 
