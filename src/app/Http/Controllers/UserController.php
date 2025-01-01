@@ -16,7 +16,7 @@ class UserController extends Controller
                 abort(403, "Registration closed");
             }
             return $this->success($this->userService()
-                ->createOrUpdate(
+                ->create(
                     Plan::findCached(Plan::FREE), 
                     $request->name, 
                     $request->email, 
@@ -25,7 +25,53 @@ class UserController extends Controller
         } catch ( \Exception $e ) {
             return $this->error($e);
         }
+    }
 
+    public function create(Request $request){
+        try {
+            return $this->success($this->userService()
+                ->create(
+                    Plan::findCached($request->plan_id), 
+                    $request->name, 
+                    $request->email, 
+                    $request->password
+                ));   
+        } catch ( \Exception $e ) {
+            return $this->error($e);
+        }
+    }
+
+    public function update(Request $request){
+        try {
+            $user = auth()->user();
+            return $this->success($this->userService()
+                ->update(
+                    $user,
+                    Plan::findCached($user->plan_id), 
+                    $request->name, 
+                    $request->email, 
+                    $request->password
+                ));   
+        } catch ( \Exception $e ) {
+            return $this->error($e);
+        }
+    }
+
+    public function updateOther(Request $request){
+        try {
+            $user = $this->userService()->getByEmail($request->email);
+            $plan = Plan::findCached($request->plan_id);
+            return $this->success($this->userService()
+                ->update(
+                    $user,
+                    $plan, 
+                    $request->name, 
+                    $request->email, 
+                    $request->password
+                ));   
+        } catch ( \Exception $e ) {
+            return $this->error($e);
+        }
     }
 
 

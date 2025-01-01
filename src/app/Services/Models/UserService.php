@@ -1,6 +1,8 @@
 <?php 
 namespace App\Services\Models;
 
+use App\Exceptions\PlanDisabled;
+use App\Exceptions\Unauthorized;
 use App\Models\Plan;
 use App\Models\Skill;
 use App\Models\User;
@@ -39,7 +41,7 @@ class UserService extends ServiceBase
      * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
      * @copyright 2024 Rodolfo Oquendo
      */
-    public function createOrUpdate(Plan $plan, string $name, string $email, string $password): ?User
+    public function create(Plan $plan, string $name, string $email, string $password): ?User
     {
         $email = $this->emailValidationService($this->user)->sanitize($email);
         if(!$this->emailValidationService($this->user)->validate($email)){
@@ -50,7 +52,42 @@ class UserService extends ServiceBase
             $user = new User();
             $user->email = $email;
         }
+        return $this->update($user, $plan, $name, $email, $password);
+    }
+
+    /**
+     * Updates an User
+     *
+     * @param  \App\Models\User $user     The user to be updated
+     * @param  \App\Models\Plan $plan     The plan to be assigned
+     * @param  string           $name     The user name
+     * @param  string           $email    The user email
+     * @param  string           $password The user password
+     *
+     * @return \App\Models\User           The user updated
+     *
+     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
+     * @copyright 2024 Rodolfo Oquendo
+     */
+    public function update(User $user, Plan $plan,  string $name, string $email, string $password): User
+    {
+        if(!$plan->isEnabled()){
+            throw new PlanDisabled($plan->cod);
+        }
+        if(!$this->emailValidationService()->validate($email)){
+            abort(422,"Invalid Email");
+        }
+        $isMe = $user->id === $this->getUser()->id;
+        if(!$isMe && !$this->userIsMaster()){
+            throw new Unauthorized("updating other user");
+        }
+        $planIsChanging = $plan->id !== $user->plan_id;
+        $planIsFree = $plan->id === Plan::FREE;
+        if($planIsChanging && !$planIsFree &&  !$this->userIsMaster()){
+            throw new Unauthorized("Invalid plan change");
+        }
         $user->plan_id = $plan->id;
+        $user->email = $email;
         $user->password = Hash::make($password);
         $user->name = $name;
         $user->save();

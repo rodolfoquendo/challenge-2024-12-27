@@ -6,8 +6,10 @@ use App\Exceptions\AuthInvalidCredentials;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
+use App\Models\User;
 use App\Traits\Http;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -21,11 +23,13 @@ class AuthController extends Controller
     public function login(LoginRequest $request): string
     {
         try {
+            $user = $this->userService()->getByEmail($request->email);
+            if (!$user instanceof User || !Hash::check($request->password, $user->password)) {
+                return $this->response('Unauthorized', 401);
+            }
+            $token = auth()->login($user);
             return $this->success([
-                'access_token' => auth('api')->attempt([
-                    "email" => $request->email,
-                    "password" => $request->password,
-                ]),
+                'access_token' => $token,
                 'token_type' => 'bearer',
                 'expires_in' => env('JWT_DURATION',60) * 60
             ]);

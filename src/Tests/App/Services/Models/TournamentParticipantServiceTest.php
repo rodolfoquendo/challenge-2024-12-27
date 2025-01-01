@@ -150,4 +150,5 @@ class TournamentParticipantServiceTest extends \Tests\TestCase
         $to = Tournament::find(7); 
         $this->assertTrue($this->tournamentParticipantService($user)->moveParticipants($from, $to));
     }
+    
 }

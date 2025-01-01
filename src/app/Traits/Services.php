@@ -4,6 +4,7 @@ namespace App\Traits;
 use App\Exceptions\UserNotSet;
 use App\Models\User;
 use App\Services\Features\TournamentFeatureService;
+use App\Services\Models\ParticipantService;
 use App\Services\Models\ParticipantSkillsService;
 use App\Services\Models\PlanService;
 use App\Services\Models\SkillService;
@@ -64,6 +65,21 @@ trait Services
             throw new UserNotSet();
         }
         return $this->user;
+    }
+
+    /**
+     * Checks if the user is the app owner
+     *
+     * @return bool 
+     *
+     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
+     * @copyright 2024 Rodolfo Oquendo
+     */
+    public function userIsMaster(?User $user = null): bool
+    {
+        $user = is_null($user) ? $this->getUser() : $user;
+        $master = User::master();
+        return $user->id == $master->id;
     }
 
     /**
@@ -128,6 +144,22 @@ trait Services
     public function planService(?User $user = null): PlanService
     {
         return $this->getService(PlanService::class, $user);
+    }
+
+    /**
+     * Returns an instance of the ParticipantService 
+     * If a user is given then is also set in the service instance
+     *
+     * @param  \App\Models\User|null            $user The user that will use the service
+     *
+     * @return \App\Services\Models\ParticipantService       The service instance with the user set (if given)
+     *
+     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
+     * @copyright 2024 
+     */
+    public function participantService(?User $user = null): ParticipantService
+    {
+        return $this->getService(ParticipantService::class, $user);
     }
 
     /**
@@ -241,12 +273,12 @@ trait Services
     private function getService(string $service, ?User $user = null){
         if (empty(self::$serviceInstances[$service])) {
             self::$serviceInstances[$service] = app()->make($service);
-            if(!$this->user instanceof User){
-                $this->user = auth()->user();
-            }
-            if ($this->user instanceof User) {
-                self::$serviceInstances[$service]->setUser($this->user);
-            }
+        }
+        if(!$this->user instanceof User){
+            $this->user = auth()->user();
+        }
+        if ($this->user instanceof User) {
+            self::$serviceInstances[$service]->setUser($this->user);
         }
         if ($user instanceof User) {
             self::$serviceInstances[$service]->setUser($user);

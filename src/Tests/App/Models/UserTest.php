@@ -9,7 +9,7 @@ class UserTest extends \Tests\TestCase
 {
     public function test__structure(){
         $this->createApplication();
-        $model = User::find(1);
+        $model = User::master();
         $this->assertTrue(isset($model->id));
         $this->assertTrue(isset($model->plan_id));
         $this->assertTrue(isset($model->name));

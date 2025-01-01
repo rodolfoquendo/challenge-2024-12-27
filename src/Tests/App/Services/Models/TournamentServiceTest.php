@@ -15,6 +15,17 @@ use DateTime;
 
 class TournamentServiceTest extends \Tests\TestCase
 {
+    public function test__getAll(){
+        $this->createApplication();
+        $user = $this->limitlessUser();
+        $tournaments = $this->tournamentService($user)->getAll();
+        $this->assertTrue(count($tournaments) >= 0 );
+        foreach($tournaments as $tournament){
+            $this->assertTrue($tournament instanceof Tournament);
+            $this->assertTrue($tournament->user_id == $user->id);
+        }
+    }
+
     public function test__getByCod(){
         $this->createApplication();
         $user = $this->limitlessUser();

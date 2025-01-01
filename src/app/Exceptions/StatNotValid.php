@@ -1,6 +1,6 @@
 <?php 
 namespace App\Exceptions;
 
-class StatNotValid extends \Exception{
+class StatNotValid extends BaseException{
     protected $code = 422;
 }

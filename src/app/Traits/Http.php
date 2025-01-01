@@ -3,7 +3,10 @@
 namespace App\Traits;
 
 use App\Exceptions\AuthInvalidCredentials;
+use App\Exceptions\BaseException;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 trait Http 
 {  
@@ -28,9 +31,13 @@ trait Http
     {
         $payload = [
             'error' => $error->getMessage(),
-            'stack' => $error->getTrace(),
         ];
+        if(env('APP_ENV') != 'prod'){
+            $payload['stack'] = $error->getTrace();
+        }
         $httpCode = $error instanceof AuthInvalidCredentials ? Response::HTTP_I_AM_A_TEAPOT : $httpCode;
+        $httpCode = $error instanceof BaseException ? $error->getCode() : $httpCode;
+        $httpCode = $error instanceof HttpException ? $error->getStatusCode() : $httpCode;
         return $this->response($payload, $httpCode);
     }
 
@@ -46,6 +53,12 @@ trait Http
      */
     public function response($payload, int $httpCode = Response::HTTP_OK): string
     {
+        if($payload instanceof Model){
+            $payload = $payload->toArray();
+            if(isset($payload['password'])){
+                unset($payload['password']);
+            }
+        }
         return response()->api($payload, $httpCode);
 
 

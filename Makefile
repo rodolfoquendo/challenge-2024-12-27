@@ -80,7 +80,7 @@ test:
 	@docker-compose -p $(APP_NAME) -f $(DOCKER_COMPOSE_TEST) up -d --force-recreate --remove-orphans 
 	@docker exec -t $(TEST_CONTAINER_NAME) composer install
 	@docker exec -t $(TEST_CONTAINER_NAME) php artisan migrate --seed
-	@docker exec -t $(TEST_CONTAINER_NAME) bash -c "./vendor/bin/phpunit --testdox --do-not-cache-result --configuration phpunit.xml --coverage-html '/platform/public/__TEST__'" 
+	@docker exec -t $(TEST_CONTAINER_NAME) bash -c "./vendor/bin/phpunit --testdox --do-not-cache-result --configuration phpunit.xml --coverage-html '/platform/public/__TEST__'"  --teamcity
 	@make coverage
 
 install:

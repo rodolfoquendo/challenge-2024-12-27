@@ -17,11 +17,12 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
         Services;
 
     protected function getToken(User $user){
-        if(!Cache::has(__METHOD__)){
-            $response = auth()->login($user);
-            Cache::put(__METHOD__, $response['payload']['access_token'], $response['payload']['expires_in']);
+        $cache_key = __METHOD__ . $user->id;
+        if(!Cache::has($cache_key)){
+            $token = auth()->login($user);
+            Cache::put($cache_key, $token, 3600);
         }
-        return Cache::get(__METHOD__);
+        return Cache::get($cache_key);
     }
 
     protected function multipart($url, array $data = [], $headers = [])
@@ -52,8 +53,10 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
 
     public function limitlessUser(): User
     {
-        $user = User::find(1);
+        $user = User::master();
         $user->plan_id = Plan::UNLIMITED;
+        $user->email = env('MASTER_USER_EMAIL','rodolfoquendo@gmail.com');
+        $user->password = env('MASTER_USER_PASSWORD','12345678');
         $user->save();
         return $user;
     }
@@ -68,7 +71,7 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
             "Authorization" => "Bearer " . $this->tokenLimitlessUser()
         ];
     }
-    protected function authHeaderLimitTester(){
+    protected function limitedHeader(){
         return [
             "Authorization" => "Bearer " . $this->tokenLimitedUser()
         ];
@@ -88,10 +91,10 @@ abstract class TestCase extends \Illuminate\Foundation\Testing\TestCase
             $user = new User();
             $user->name = 'Rodolfo Oquendo';
             $user->email = $email;
-            $user->password = Hash::make($password);
-            $user->plan_id = $plan_id;
-            $user->save();
         }
+        $user->password = Hash::make($password);
+        $user->plan_id = $plan_id;
+        $user->save();
         return $user;
     }
 }

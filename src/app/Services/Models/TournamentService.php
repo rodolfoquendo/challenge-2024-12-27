@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserStatistic;
 use App\Services\ServiceBase;
 use DateTime;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class TournamentService extends ServiceBase
@@ -32,6 +33,21 @@ class TournamentService extends ServiceBase
         return Tournament::where('user_id', $user->id)
             ->where('cod', $cod)
             ->first();
+    }
+
+    /**
+     * Gets all the tournaments for the user
+     *
+     * @return Illuminate\Database\Eloquent\Collection|array 
+     *
+     * @author Rodolfo Oquendo <rodolfoquendo@gmail.com>
+     * @copyright 2024 Rodolfo Oquendo
+     */
+    public function getAll(): ?Collection
+    {
+        $user = $this->getUser();
+        return Tournament::where('user_id', $user->id)
+            ->get();
     }
 
     /**

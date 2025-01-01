@@ -39,8 +39,8 @@ class AuthControllerTest extends \Tests\TestCase
     {
         $this->createApplication();
         $response = $this->postJson($this->APIRoute_v1('auth/login'),[
-            'email' => 'asdd@asd.asd',
-            'password' => 'asdd',
+            'email' => 'asdd@asd.asdd',
+            'password' => 'asdadasd',
         ],[
             'Content-Type' => 'application/json',
         ]);
@@ -81,6 +81,7 @@ class AuthControllerTest extends \Tests\TestCase
         $this->assertTrue($response['success']);
         $this->assertTrue($response['status'] == Response::HTTP_OK);
         $this->assertTrue(isset($response['payload']['access_token']));
+        $this->assertTrue(\is_string($response['payload']['access_token']));
 
     }
 }
