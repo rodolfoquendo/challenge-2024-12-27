@@ -68,13 +68,13 @@ push-prod:
 coverage:
 	@open src/public/__TEST__/index.html
 run:	
-	# @make build-base
+	@make build-base
 	@docker rm -f -v db-test php-test
 	@rm -rf src/bootstrap/cache/* src/storage/framework/cache/*
 	@docker-compose -p $(APP_NAME) -f $(DOCKER_COMPOSE_DEV) up -d --force-recreate --remove-orphans 
 
 test:	
-	# @make build-base
+	@make build-base
 	@docker rm -f -v db-test php-test
 	@rm -rf src/bootstrap/cache/* src/storage/framework/cache/*
 	@docker-compose -p $(APP_NAME) -f $(DOCKER_COMPOSE_TEST) up -d --force-recreate --remove-orphans 
